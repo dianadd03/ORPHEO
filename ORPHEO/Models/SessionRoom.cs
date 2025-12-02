@@ -9,18 +9,18 @@ namespace Orpheo.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Required]
-        public string HostUserId { get; set; }
-        public virtual ApplicationUser HostUser { get; set; }
+        public string? HostUserId { get; set; }
+        public virtual ApplicationUser  ? HostUser { get; set; }
 
         // SessionRoom M - Playlist 1 
         [Required]
         public int PlaylistId { get; set; }
-        public virtual Playlist Playlist { get; set; }
+        public virtual Playlist? Playlist { get; set; }
 
         // M - M cu User
-        public virtual ICollection<SessionRoomUser> SessionRoomUsers { get; set; }
+        public virtual ICollection<SessionRoomUser> SessionRoomUsers { get; set; } = new List<SessionRoomUser>();
     }
 }

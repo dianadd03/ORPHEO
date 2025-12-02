@@ -1,0 +1,58 @@
+﻿@using Orpheo.Models
+@{
+    ViewData["Title"] = "Songs";
+    var songs = ViewBag.Songs as IEnumerable<Song>;
+}
+
+<h2>Lista cântecelor</h2>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert @ViewBag.AlertType">
+        @ViewBag.Message
+    </div>
+}
+
+@if (User.IsInRole("Artist") || User.IsInRole("Admin"))
+{
+    <p>
+        <a asp-action="New" class="btn btn-primary">Adaugă cântec</a>
+    </p>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Artist</th>
+            <th>Added by</th>
+            <th>Tags</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (songs != null)
+    {
+        foreach (var s in songs)
+        {
+            <tr>
+                <td>@s.Title</td>
+                <td>@s.Artist</td>
+                <td>@s.User?.UserName</td>
+                <td>
+                    @if (s.SongTags != null)
+                    {
+                        foreach (var st in s.SongTags)
+                        {
+                            @st.Tag?.Name <span> </span>
+                        }
+                    }
+                </td>
+                <td>
+                    <a asp-action="Show" asp-route-id="@s.Id" class="btn btn-sm btn-info">Show</a>
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>

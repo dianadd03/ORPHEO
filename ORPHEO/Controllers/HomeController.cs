@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using ORPHEO.Models;
+using Orpheo.Models;
 
-namespace ORPHEO.Controllers
+namespace Orpheo.Controllers
 {
     public class HomeController : Controller
     {

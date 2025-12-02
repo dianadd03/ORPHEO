@@ -1,0 +1,26 @@
+﻿@model Orpheo.Models.Song
+
+@{
+    ViewData["Title"] = "Șterge cântec";
+}
+
+<h2>Șterge cântec</h2>
+
+<h4>Ești sigur că vrei să ștergi acest cântec?</h4>
+
+<dl class="row">
+    <dt class="col-sm-2">Title</dt>
+    <dd class="col-sm-10">@Model.Title</dd>
+
+    <dt class="col-sm-2">Artist</dt>
+    <dd class="col-sm-10">@Model.Artist</dd>
+
+    <dt class="col-sm-2">Url</dt>
+    <dd class="col-sm-10">@Model.Url</dd>
+</dl>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Șterge</button>
+    <a asp-action="Index" class="btn btn-secondary">Renunță</a>
+</form>

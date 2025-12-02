@@ -1,0 +1,53 @@
+﻿@model Orpheo.Models.Song
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Editează cântec";
+    var tags = ViewBag.Tags as IEnumerable<SelectListItem>;
+    var selectedTags = ViewBag.SelectedTags as List<int>;
+}
+
+<h2>Editează cântec</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Artist" class="form-label"></label>
+        <input asp-for="Artist" class="form-control" />
+        <span asp-validation-for="Artist" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Url" class="form-label"></label>
+        <input asp-for="Url" class="form-control" />
+        <span asp-validation-for="Url" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Taguri</label>
+        <select name="SelectedTags" multiple class="form-control">
+            @if (tags != null)
+            {
+                foreach (var tag in tags)
+                {
+                    var isSelected = selectedTags != null && selectedTags.Contains(int.Parse(tag.Value));
+                    <option value="@tag.Value" selected="@(isSelected ? "selected" : null)">
+                        @tag.Text
+                    </option>
+                }
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Salvează</button>
+    <a asp-action="Index" class="btn btn-secondary">Renunță</a>
+</form>

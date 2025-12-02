@@ -1,9 +1,8 @@
-namespace ORPHEO.Models
-{
-    public class ErrorViewModel
-    {
-        public string? RequestId { get; set; }
+namespace Orpheo.Models;
 
-        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
-    }
+public class ErrorViewModel
+{
+    public string? RequestId { get; set; }
+
+    public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
 }

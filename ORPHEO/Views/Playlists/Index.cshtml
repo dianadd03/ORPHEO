@@ -1,0 +1,38 @@
+﻿@using Orpheo.Models
+
+@{
+    var playlists = ViewBag.Playlists as IEnumerable<Playlist>;
+}
+
+<h2>Lista playlisturilor</h2>
+
+<a asp-action="New" class="btn btn-primary mb-3">Creează playlist</a>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert @ViewBag.AlertType">@ViewBag.Message</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nume</th>
+            <th>Proprietar</th>
+            <th>Cântece</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in playlists)
+        {
+            <tr>
+                <td>@p.Name</td>
+                <td>@p.User?.UserName</td>
+                <td>@p.PlaylistSongs?.Count()</td>
+                <td>
+                    <a asp-action="Show" asp-route-id="@p.Id" class="btn btn-info btn-sm">Show</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
