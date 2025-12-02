@@ -1,0 +1,10 @@
+﻿@model Orpheo.Models.Tag
+
+<h2>Ștergere tag</h2>
+
+<p>Ești sigur că vrei să ștergi tag-ul <strong>@Model.Name</strong>?</p>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button class="btn btn-danger">Șterge</button>
+    <a asp-action="Index" class="btn btn-secondary">Renunță</a>
+</form>

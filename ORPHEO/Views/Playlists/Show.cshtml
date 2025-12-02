@@ -1,0 +1,67 @@
+﻿@model Orpheo.Models.Playlist
+
+<h2>@Model.Name</h2>
+
+<p><strong>Proprietar:</strong> @Model.User.UserName</p>
+
+@if (ViewBag.AfisareButoane == true)
+{
+    <p>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editează</a>
+
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+            <button type="submit" class="btn btn-danger">Șterge</button>
+        </form>
+    </p>
+}
+
+<hr />
+
+<h4>Cântece în playlist</h4>
+
+@if (Model.PlaylistSongs.Any())
+{
+    <ul class="list-group">
+        @foreach (var ps in Model.PlaylistSongs)
+        {
+            <li class="list-group-item d-flex justify-content-between">
+                <span>@ps.Song.Title</span>
+
+                @if (ViewBag.AfisareButoane == true)
+                {
+                    <form asp-action="RemoveSong" method="post" class="d-inline">
+                        <input type="hidden" name="playlistId" value="@Model.Id" />
+                        <input type="hidden" name="songId" value="@ps.SongId" />
+                        <button class="btn btn-sm btn-outline-danger">Șterge</button>
+                    </form>
+                }
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p><em>Nu există cântece în playlist.</em></p>
+}
+
+@if (ViewBag.AfisareButoane == true)
+{
+    <hr />
+    <h5>Adaugă cântec</h5>
+
+    <form asp-action="AddSong" method="post">
+        <input type="hidden" name="playlistId" value="@Model.Id" />
+
+        <select name="songId" class="form-select mb-2">
+            @foreach (var s in ViewBag.Songs)
+            {
+                <option value="@s.Value">@s.Text</option>
+            }
+        </select>
+
+        <button type="submit" class="btn btn-primary">Adaugă</button>
+    </form>
+}
+
+<br />
+<a asp-action="Index" class="btn btn-secondary">Înapoi</a>

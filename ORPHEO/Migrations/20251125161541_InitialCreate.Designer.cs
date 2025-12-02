@@ -9,7 +9,7 @@ using Orpheo.Data;
 
 #nullable disable
 
-namespace ORPHEO.Migrations
+namespace Orpheo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20251125161541_InitialCreate")]

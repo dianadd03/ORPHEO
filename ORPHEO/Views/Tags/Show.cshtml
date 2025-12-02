@@ -1,0 +1,34 @@
+﻿@model Orpheo.Models.Tag
+
+<h2>@Model.Name</h2>
+
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editează</a>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+            <button class="btn btn-danger">Șterge</button>
+        </form>
+    </p>
+}
+
+<hr />
+
+<h4>Cântece care folosesc acest tag</h4>
+
+@if (Model.SongTags.Any())
+{
+    <ul class="list-group">
+        @foreach (var st in Model.SongTags)
+        {
+            <li class="list-group-item">@st.Song.Title</li>
+        }
+    </ul>
+}
+else
+{
+    <p><em>Nu există melodii cu acest tag.</em></p>
+}
+
+<br />
+<a asp-action="Index" class="btn btn-secondary">Înapoi</a>
