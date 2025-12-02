@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace ORPHEO.Migrations
+namespace Orpheo.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

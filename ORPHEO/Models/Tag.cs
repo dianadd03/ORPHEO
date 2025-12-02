@@ -9,8 +9,8 @@ namespace Orpheo.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
-        public virtual ICollection<SongTag> SongTags { get; set; }
+        public virtual ICollection<SongTag> SongTags { get; set; } = new List<SongTag>();
     }
 }

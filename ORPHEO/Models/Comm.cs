@@ -15,12 +15,12 @@ namespace Orpheo.Models
 
         // user 1 - M comms
         [Required]
-        public string UserId { get; set; }
-        public virtual ApplicationUser User { get; set; }
+        public string? UserId { get; set; }
+        public virtual ApplicationUser? User { get; set; }
 
         // song 1 - M comms
         [Required]
         public int SongId { get; set; }
-        public virtual Song Song { get; set; }
+        public virtual Song? Song { get; set; }
     }
 }
