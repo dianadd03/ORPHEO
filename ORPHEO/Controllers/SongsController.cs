@@ -68,6 +68,8 @@ namespace Orpheo.Controllers
             comm.CreatedAt = DateTime.Now;
             comm.UserId = _userManager.GetUserId(User);
 
+            ModelState.Remove("UserId");
+
             if (ModelState.IsValid)
             {
                 db.Comms.Add(comm);
@@ -181,6 +183,8 @@ namespace Orpheo.Controllers
             {
                 return NotFound();
             }
+            ModelState.Remove("UserId");
+            requestSong.UserId = song.UserId;
 
             if (song.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
             {
@@ -211,20 +215,18 @@ namespace Orpheo.Controllers
 
                     return RedirectToAction("Index");
                 }
-                else
-                {
-                    ViewBag.Tags = GetAllTags();
-                    ViewBag.SelectedTags = SelectedTags;
-                    return View(requestSong);
-                }
+
+                ViewBag.Tags = GetAllTags();
+                ViewBag.SelectedTags = song.SongTags.Select(t => t.TagId).ToList();
+
+                return View(song);
             }
-            else
-            {
-                TempData["message"] = "Nu aveți dreptul să modificați un cântec care nu vă aparține!";
-                TempData["messageType"] = "alert-danger";
-                return RedirectToAction("Index");
-            }
+
+            TempData["message"] = "Nu aveți dreptul să modificați un cântec care nu vă aparține!";
+            TempData["messageType"] = "alert-danger";
+            return RedirectToAction("Index");
         }
+
 
         [Authorize(Roles = "Admin,Artist")]
         [HttpGet]
@@ -265,8 +267,22 @@ namespace Orpheo.Controllers
 
             if (song.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
             {
+                // Ștergere SongTags
+                var songTags = db.SongTags.Where(st => st.SongId == song.Id);
+                db.SongTags.RemoveRange(songTags);
+
+                // Ștergere PlaylistSongs
+                var playlistSongs = db.PlaylistSongs.Where(ps => ps.SongId == song.Id);
+                db.PlaylistSongs.RemoveRange(playlistSongs);
+
+                // Ștergere comentarii
+                var comms = db.Comms.Where(c => c.SongId == song.Id);
+                db.Comms.RemoveRange(comms);
+
+                // Ștergere finală song
                 db.Songs.Remove(song);
                 db.SaveChanges();
+
 
                 TempData["message"] = "Cântecul a fost șters";
                 TempData["messageType"] = "alert-success";

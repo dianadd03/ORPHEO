@@ -53,18 +53,19 @@ else
 
 @if (User.Identity.IsAuthenticated)
 {
-    <h5>Adaugă un comentariu</h5>
+    <h3>Adaugă comentariu</h3>
 
-    <form asp-action="Show" method="post">
+    <form asp-action="Show" asp-controller="Songs" method="post">
         <input type="hidden" name="SongId" value="@Model.Id" />
 
-        <div class="mb-3">
-            <label for="Content" class="form-label">Comentariu</label>
-            <textarea name="Content" class="form-control"></textarea>
+        <div class="form-group">
+            <label for="Text">Comentariu</label>
+            <textarea class="form-control" name="Text"></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary">Postează</button>
+        <button type="submit" class="btn btn-primary mt-2">Trimite</button>
     </form>
+
 }
 else
 {
