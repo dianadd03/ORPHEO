@@ -124,7 +124,8 @@ namespace Orpheo.Controllers
             {
                 return NotFound();
             }
-
+            ModelState.Remove("UserId");
+            requestPlaylist.UserId = playlist.UserId;
             if (playlist.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
             {
                 if (ModelState.IsValid)
@@ -161,6 +162,9 @@ namespace Orpheo.Controllers
 
             if (playlist.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
             {
+                db.PlaylistSongs.RemoveRange(
+                                                db.PlaylistSongs.Where(ps => ps.PlaylistId == id)
+                                            );
                 db.Playlists.Remove(playlist);
                 db.SaveChanges();
 
