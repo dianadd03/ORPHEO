@@ -65,7 +65,7 @@ namespace Orpheo.Controllers
         }
 
 
-        [Authorize(Roles = "User,Artist,Admin")]
+        [Authorize(Roles = "User,Artist")]
         public IActionResult Edit(int id)
         {
             Comm? comm = db.Comms.Find(id);
@@ -76,7 +76,7 @@ namespace Orpheo.Controllers
             }
             else
             {
-                if (comm.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
+                if (comm.UserId == _userManager.GetUserId(User))
                 {
                     return View(comm);
                 }
@@ -96,6 +96,8 @@ namespace Orpheo.Controllers
         public IActionResult Edit(int id, Comm requestComm)
         {
             Comm? comm = db.Comms.Find(id);
+            ModelState.Remove("UserId");
+
 
             if (comm == null)
             {
