@@ -2,6 +2,7 @@
 {
     public class SongTag
     {
+
         public int SongId { get; set; }
         public virtual Song? Song { get; set; }
 

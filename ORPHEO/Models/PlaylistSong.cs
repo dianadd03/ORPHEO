@@ -2,6 +2,7 @@
 {
     public class PlaylistSong
     {
+        
         public int PlaylistId { get; set; }
         public virtual Playlist? Playlist { get; set; }
 

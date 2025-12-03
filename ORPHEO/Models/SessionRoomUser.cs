@@ -2,6 +2,7 @@
 {
     public class SessionRoomUser
     {
+
         public int SessionRoomId { get; set; }
         public virtual SessionRoom? SessionRoom { get; set; }
 
