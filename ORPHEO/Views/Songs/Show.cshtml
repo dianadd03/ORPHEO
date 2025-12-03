@@ -21,12 +21,18 @@
     </p>
 }
 
-@if (ViewBag.AfisareButoane == true &&
-    (Model.UserId == (string)ViewBag.UserCurent || ViewBag.IsAdmin == true))
+@* Butoane edit/delete pentru cântec *@
+@if (ViewBag.AfisareButoane == true && Model.UserId == ViewBag.UserCurent)
 {
     <p>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
-        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Delete</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editează</a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Șterge</a>
+    </p>
+}
+else if (ViewBag.IsAdmin == true)
+{
+    <p>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Șterge</a>
     </p>
 }
 
@@ -34,26 +40,69 @@
 
 <h4>Comentarii</h4>
 
+@* LISTĂ COMENTARII *@
 @if (Model.Comms != null && Model.Comms.Any())
 {
-    <ul class="list-group mb-3">
-        @foreach (var c in Model.Comms.OrderByDescending(c => c.CreatedAt))
-        {
-            <li class="list-group-item">
-                <p>@c.Text</p>
-                <small>by @c.User?.UserName, @c.CreatedAt.ToString("g")</small>
-            </li>
-        }
-    </ul>
+    @foreach (var c in Model.Comms.OrderByDescending(c => c.CreatedAt))
+    {
+        <div class="card p-3 mb-3">
+
+            <p>@c.Text</p>
+            <small>@c.CreatedAt.ToString("g")</small>
+            <br />
+            <strong><i class="bi bi-person"></i> @c.User?.UserName</strong>
+
+            @* Butoane doar dacă userul e autor sau admin *@
+            @if (c.UserId == ViewBag.UserCurent)
+            {
+                <div class="d-flex mt-2">
+
+                    <a class="btn btn-outline-primary me-2"
+                       asp-controller="Comms"
+                       asp-action="Edit"
+                       asp-route-id="@c.Id">
+                        <i class="bi bi-pencil-square"></i> Editează
+                    </a>
+
+                    <form method="post"
+                          asp-controller="Comms"
+                          asp-action="Delete"
+                          asp-route-id="@c.Id">
+                        <button class="btn btn-outline-danger" type="submit">
+                            <i class="bi bi-trash"></i> Șterge
+                        </button>
+                    </form>
+
+                </div>
+            }
+            else if (ViewBag.IsAdmin == true)
+            {
+                <div class="d-flex mt-2">
+
+                    <form method="post"
+                          asp-controller="Comms"
+                          asp-action="Delete"
+                          asp-route-id="@c.Id">
+                        <button class="btn btn-outline-danger" type="submit">
+                            <i class="bi bi-trash"></i> Șterge
+                        </button>
+                    </form>
+
+                </div>
+            }
+
+        </div>
+    }
 }
 else
 {
     <p>Nu există comentarii.</p>
 }
 
+@* FORM ADAUGARE COMENTARIU *@
 @if (User.Identity.IsAuthenticated)
 {
-    <h3>Adaugă comentariu</h3>
+    <h4>Adaugă comentariu</h4>
 
     <form asp-action="Show" asp-controller="Songs" method="post">
         <input type="hidden" name="SongId" value="@Model.Id" />
@@ -65,7 +114,6 @@ else
 
         <button type="submit" class="btn btn-primary mt-2">Trimite</button>
     </form>
-
 }
 else
 {
