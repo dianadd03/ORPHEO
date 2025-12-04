@@ -17,7 +17,8 @@ namespace Orpheo.Controllers
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
 
 
-        [Authorize(Roles = "User,Artist,Admin")]
+        //[Authorize(Roles = "User,Artist,Admin")]
+        [AllowAnonymous]
         public IActionResult Index()
         {
             var playlists = db.Playlists
@@ -38,8 +39,9 @@ namespace Orpheo.Controllers
             return View();
         }
 
-        [Authorize(Roles = "User,Artist,Admin")]
-        public IActionResult Show(int id)
+        //[Authorize(Roles = "User,Artist,Admin")]
+        [AllowAnonymous]
+        public IActionResult Show(int id, string search)
         {
             Playlist? playlist = db.Playlists
                 .Include(p => p.User)
@@ -54,10 +56,49 @@ namespace Orpheo.Controllers
                 return NotFound();
             }
 
-            SetAccessRights(playlist);
+            // pentru afisare in view
+            ViewBag.Search = search;
+            ViewBag.FoundSong = null;
+
+            // daca am scris ceva in search, caut
+            if (!string.IsNullOrEmpty(search))
+            {
+                var found = playlist.PlaylistSongs
+                                    .FirstOrDefault(ps =>
+                                            ps.Song.Title.Trim().Equals(search.Trim(), StringComparison.OrdinalIgnoreCase));
+
+                TempData["Search"] = search;
+                TempData["Found"] = (found != null);
+
+                if (found != null)
+                {
+                    TempData["Title"] = found.Song.Title;
+                }
+
+                return RedirectToAction("Show", new { id = id });
+            }
+
+                if(TempData.ContainsKey("Search"))
+                {
+                    ViewBag.JustSearched = true;
+                    ViewBag.Search = TempData["Search"].ToString();
+
+                    bool foundd = (bool)TempData["Found"];
+
+                    if (foundd)
+                        ViewBag.FoundSongTitle = TempData["Title"].ToString();
+                    else
+                        ViewBag.FoundSongTitle = null;
+                }
+                else
+                {
+                    ViewBag.JustSearched = false;
+                }
 
             // dropdown de melodii
             ViewBag.Songs = GetAllSongs();
+
+            SetAccessRights(playlist);
 
             return View(playlist);
         }

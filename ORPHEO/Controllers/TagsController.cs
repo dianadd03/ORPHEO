@@ -16,7 +16,8 @@ namespace Orpheo.Controllers
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
 
 
-        [Authorize(Roles = "User,Artist,Admin")]
+        //[Authorize(Roles = "User,Artist,Admin")]
+        [AllowAnonymous]
         public IActionResult Index()
         {
             var tags = db.Tags

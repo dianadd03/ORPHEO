@@ -17,6 +17,9 @@ namespace Orpheo.Models
         public string? Url { get; set; }
 
         [Required]
+        public DateTime DataPublicarii { get; set; }
+
+        [Required]
         public string? UserId { get; set; }
         public virtual ApplicationUser? User { get; set; }
 

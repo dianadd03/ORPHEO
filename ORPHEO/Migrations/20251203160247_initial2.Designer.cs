@@ -12,8 +12,8 @@ using Orpheo.Data;
 namespace Orpheo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251125161541_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251203160247_initial2")]
+    partial class initial2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -188,7 +188,6 @@ namespace Orpheo.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
@@ -352,7 +351,6 @@ namespace Orpheo.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Artist")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")

@@ -6,7 +6,10 @@
 
 <h2>Lista playlisturilor</h2>
 
-<a asp-action="New" class="btn btn-primary mb-3">Creează playlist</a>
+@if (User.Identity.IsAuthenticated)
+{
+    <a asp-action="New" class="btn btn-primary mb-3">Creează playlist</a>
+}
 
 @if (ViewBag.Message != null)
 {
@@ -36,3 +39,8 @@
         }
     </tbody>
 </table>
+
+@if (!User.Identity.IsAuthenticated)
+{
+    <i>Trebuie sa te loghezi pentru a putea crea un playlist.</i>
+}
