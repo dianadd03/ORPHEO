@@ -17,16 +17,22 @@ namespace Orpheo.Controllers
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
 
 
+
         //[Authorize(Roles = "User,Artist,Admin")]
         [AllowAnonymous]
         public IActionResult Index()
         {
             var playlists = db.Playlists
-                              .Include(p => p.User)
-                              .Include(p => p.PlaylistSongs)
-                                .ThenInclude(ps => ps.Song)
-                              .OrderByDescending(p => p.Id)
-                              .ToList();
+                            .Where(p =>
+                                p.IsPublic ||
+                                (User.Identity.IsAuthenticated && p.UserId == _userManager.GetUserId(User)) ||
+                                User.IsInRole("Admin")
+                            )
+                            .Include(p => p.User)
+                            .Include(p => p.PlaylistSongs).ThenInclude(ps => ps.Song)
+                            .OrderByDescending(p => p.Id)
+                            .ToList();
+
 
             ViewBag.Playlists = playlists;
 
@@ -45,27 +51,37 @@ namespace Orpheo.Controllers
         {
             Playlist? playlist = db.Playlists
                 .Include(p => p.User)
-                .Include(p => p.PlaylistSongs)
-                    .ThenInclude(ps => ps.Song)
+                .Include(p => p.PlaylistSongs).ThenInclude(ps => ps.Song)
                 .Include(p => p.SessionRooms)
-                .Where(p => p.Id == id)
-                .FirstOrDefault();
-
-            if (playlist is null)
+                .FirstOrDefault(p => p.Id == id);
+            if (!playlist.IsPublic &&
+                        playlist.UserId != _userManager.GetUserId(User) &&
+                        !User.IsInRole("Admin"))
             {
-                return NotFound();
+                TempData["message"] = "This playlist is private!";
+                TempData["messageType"] = "alert-danger";
+                return RedirectToAction("Index");
             }
 
-            // pentru afisare in view
+
+            if (playlist == null)
+                return NotFound();
+
+
+            if (TempData.ContainsKey("AddSongMessage"))
+            {
+                ViewBag.AddSongMessage = TempData["AddSongMessage"];
+            }
+
+
             ViewBag.Search = search;
             ViewBag.FoundSong = null;
 
-            // daca am scris ceva in search, caut
             if (!string.IsNullOrEmpty(search))
             {
                 var found = playlist.PlaylistSongs
-                                    .FirstOrDefault(ps =>
-                                            ps.Song.Title.Trim().Equals(search.Trim(), StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(ps =>
+                        ps.Song.Title.Trim().Equals(search.Trim(), StringComparison.OrdinalIgnoreCase));
 
                 TempData["Search"] = search;
                 TempData["Found"] = (found != null);
@@ -78,30 +94,31 @@ namespace Orpheo.Controllers
                 return RedirectToAction("Show", new { id = id });
             }
 
-                if(TempData.ContainsKey("Search"))
-                {
-                    ViewBag.JustSearched = true;
-                    ViewBag.Search = TempData["Search"].ToString();
+            if (TempData.Peek("Search") != null)
+            {
+                ViewBag.JustSearched = true;
+                ViewBag.Search = TempData["Search"].ToString();
 
-                    bool foundd = (bool)TempData["Found"];
+                bool foundd = (bool)TempData["Found"];
 
-                    if (foundd)
-                        ViewBag.FoundSongTitle = TempData["Title"].ToString();
-                    else
-                        ViewBag.FoundSongTitle = null;
-                }
-                else
-                {
-                    ViewBag.JustSearched = false;
-                }
+                ViewBag.FoundSongTitle = foundd
+                    ? TempData["Title"].ToString()
+                    : null;
+            }
+            else
+            {
+                ViewBag.JustSearched = false;
+            }
 
-            // dropdown de melodii
+            //dropdown d emelodii
             ViewBag.Songs = GetAllSongs();
 
+            
             SetAccessRights(playlist);
 
             return View(playlist);
         }
+
 
 
         [Authorize(Roles = "User,Artist,Admin")]
@@ -114,10 +131,27 @@ namespace Orpheo.Controllers
 
         [Authorize(Roles = "User,Artist,Admin")]
         [HttpPost]
-        public IActionResult New(Playlist playlist)
+        public IActionResult New(Playlist playlist, IFormFile ImageFile)
         {
             playlist.UserId = _userManager.GetUserId(User);
             ModelState.Remove("UserId");
+
+            if (ImageFile != null && ImageFile.Length > 0)
+            {
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/playlists");
+                Directory.CreateDirectory(uploadsFolder);
+
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
+                string filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = System.IO.File.Create(filePath))
+                {
+                    ImageFile.CopyTo(stream);
+                }
+
+                playlist.ImagePath = "/uploads/playlists/" + fileName;
+            }
+
 
             if (ModelState.IsValid)
             {
@@ -157,21 +191,43 @@ namespace Orpheo.Controllers
 
         [Authorize(Roles = "User,Artist,Admin")]
         [HttpPost]
-        public IActionResult Edit(int id, Playlist requestPlaylist)
+        public IActionResult Edit(int id, Playlist requestPlaylist, IFormFile ImageFile)
         {
             Playlist? playlist = db.Playlists.Find(id);
 
             if (playlist == null)
-            {
                 return NotFound();
-            }
+
             ModelState.Remove("UserId");
-            requestPlaylist.UserId = playlist.UserId;
+
             if (playlist.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
             {
                 if (ModelState.IsValid)
                 {
                     playlist.Name = requestPlaylist.Name;
+                    playlist.IsPublic = requestPlaylist.IsPublic;
+
+                    // 🔥 Dacă userul NU a încărcat o poză nouă → păstrează poza veche
+                    if (ImageFile == null || ImageFile.Length == 0)
+                    {
+                        // NU schimbăm ImagePath
+                    }
+                    else
+                    {
+                        // 🔥 Dacă userul a încărcat POZĂ NOUĂ → upload
+                        string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/playlists");
+                        Directory.CreateDirectory(uploadsFolder);
+
+                        string fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
+                        string filePath = Path.Combine(uploadsFolder, fileName);
+
+                        using (var stream = System.IO.File.Create(filePath))
+                        {
+                            ImageFile.CopyTo(stream);
+                        }
+
+                        playlist.ImagePath = "/uploads/playlists/" + fileName;
+                    }
 
                     db.SaveChanges();
 
@@ -233,30 +289,28 @@ namespace Orpheo.Controllers
 
             if (playlist.UserId != _userManager.GetUserId(User) && !User.IsInRole("Admin"))
             {
-                TempData["message"] = "Nu aveți dreptul să modificați acest playlist!";
-                TempData["messageType"] = "alert-danger";
-
-                return Redirect("/Playlists/Show/" + playlistId);
+                TempData["AddSongMessage"] = "Nu aveți dreptul să modificați acest playlist!";
+                return RedirectToAction("Show", new { id = playlistId });
             }
 
-            bool exists = db.PlaylistSongs
-                            .Any(ps => ps.PlaylistId == playlistId && ps.SongId == songId);
+            bool exists = db.PlaylistSongs.Any(ps => ps.PlaylistId == playlistId && ps.SongId == songId);
 
-            if (!exists)
+            if (exists)
             {
-                db.PlaylistSongs.Add(new PlaylistSong
-                {
-                    PlaylistId = playlistId,
-                    SongId = songId
-                });
-
-                db.SaveChanges();
-
-                TempData["message"] = "Cântecul a fost adăugat!";
-                TempData["messageType"] = "alert-success";
+                TempData["AddSongMessage"] = "Acest cântec există deja în playlist!";
+                return RedirectToAction("Show", new { id = playlistId });
             }
 
-            return Redirect("/Playlists/Show/" + playlistId);
+            db.PlaylistSongs.Add(new PlaylistSong
+            {
+                PlaylistId = playlistId,
+                SongId = songId
+            });
+
+            db.SaveChanges();
+
+            TempData["AddSongMessage"] = "Cântecul a fost adăugat!";
+            return RedirectToAction("Show", new { id = playlistId });
         }
 
 

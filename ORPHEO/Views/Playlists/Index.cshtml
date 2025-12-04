@@ -16,29 +16,47 @@
     <div class="alert @ViewBag.AlertType">@ViewBag.Message</div>
 }
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Nume</th>
-            <th>Proprietar</th>
-            <th>Cântece</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var p in playlists)
-        {
-            <tr>
-                <td>@p.Name</td>
-                <td>@p.User?.UserName</td>
-                <td>@p.PlaylistSongs?.Count()</td>
-                <td>
-                    <a asp-action="Show" asp-route-id="@p.Id" class="btn btn-info btn-sm">Show</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    @foreach (var p in playlists)
+    {
+        <div class="col">
+            <div class="card shadow-sm" style="border-radius: 12px;">
+
+                <img src="@(string.IsNullOrEmpty(p.ImagePath)
+                                 ? "/uploads/playlists/default.jpg"
+                                 : p.ImagePath)"
+                     class="card-img-top"
+                     style="height: 250px; object-fit: cover; border-radius: 12px 12px 0 0;" />
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        @p.Name
+                        @if (p.IsPublic)
+                        {
+                            <i class="bi bi-unlock" title="Public playlist"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-lock" title="Private playlist"></i>
+                        }
+                    </h5>
+
+                    <p class="card-text">
+                        <strong>User:</strong> @p.User?.UserName <br />
+                        <strong>Songs:</strong> @p.PlaylistSongs?.Count()
+                    </p>
+
+                    <a asp-action="Show" asp-route-id="@p.Id" class="btn btn-primary w-100">
+                        Open playlist
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
 
 @if (!User.Identity.IsAuthenticated)
 {
