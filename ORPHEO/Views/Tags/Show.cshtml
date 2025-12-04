@@ -5,10 +5,12 @@
 @if (User.IsInRole("Admin"))
 {
     <p>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editează</a>
+        <div class="d-flex justify-content-end gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning"> <i class="bi bi-pencil-square"></i></a>
         <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
-            <button class="btn btn-danger">Șterge</button>
+            <button class="btn btn-danger"><i class="bi bi-trash-fill"></i></button>
         </form>
+        </div>
     </p>
 }
 

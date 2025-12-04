@@ -1,58 +1,96 @@
-﻿@using Orpheo.Models
-@{
+﻿@{
     ViewData["Title"] = "Songs";
-    var songs = ViewBag.Songs as IEnumerable<Song>;
 }
 
-<h2>Lista cântecelor</h2>
+<h2 class="mb-4">All Songs</h2>
 
 @if (ViewBag.Message != null)
 {
-    <div class="alert @ViewBag.AlertType">
+    <div class="alert @ViewBag.AlertType mt-2">
         @ViewBag.Message
     </div>
 }
-
-@if (User.IsInRole("Artist") || User.IsInRole("Admin"))
+@if (ViewBag.AfisareButoane == true)
 {
-    <p>
-        <a asp-action="New" class="btn btn-primary">Adaugă cântec</a>
-    </p>
+    <a class="btn btn-primary mb-4" href="/Songs/New">
+        <i class="fa-solid fa-plus"></i> Add Song
+    </a>
 }
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Artist</th>
-            <th>Added by</th>
-            <th>Tags</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    @if (songs != null)
-    {
-        foreach (var s in songs)
-        {
-            <tr>
-                <td>@s.Title</td>
-                <td>@s.Artist</td>
-                <td>@s.User?.UserName</td>
-                <td>
-                    @if (s.SongTags != null)
-                    {
-                        foreach (var st in s.SongTags)
-                        {
-                            @st.Tag?.Name <span> </span>
-                        }
+<!-- Lista de melodii -->
+@foreach (var song in ViewBag.Songs)
+{
+    <div class="song-card shadow-sm p-3 mb-4 d-flex align-items-center rounded"
+         style="background:#f9f9f9;">
+
+        <!-- Icon Play -->
+        <button class="btn btn-light play-btn me-3"
+                onclick="togglePlay('@song.Id')"
+                style="width:50px;height:50px;border-radius:50%;
+                           box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+            <i id="icon-@song.Id" class="fa-solid fa-play"></i>
+        </button>
+
+        <!-- Song Info -->
+        <div style="flex-grow:1;">
+            <h5 class="mb-1">@song.Title</h5>
+            <p class="text-muted mb-0">@song.Artist</p>
+        </div>
+
+        <!-- Audio Player ascuns -->
+        <audio id="audio-@song.Id" style="display:none;">
+            <source src="@song.Url" type="audio/mpeg" />
+        </audio>
+
+        <!-- Buton Details -->
+        <a href="/Songs/Show/@song.Id"
+           class="btn btn-outline-secondary ms-3">
+            Details
+        </a>
+    </div>
+}
+
+<!-- Script Play/Pause -->
+<script>
+    function togglePlay(id) {
+        var audio = document.getElementById("audio-" + id);
+        var icon = document.getElementById("icon-" + id);
+
+        if (audio.paused) {
+
+            // Oprește orice altă melodie
+            document.querySelectorAll("audio").forEach(a => {
+                if (a !== audio) {
+                    a.pause();
+                    a.currentTime = 0;
+
+                    let otherIcon = document.getElementById("icon-" + a.id.replace("audio-", ""));
+                    if (otherIcon) {
+                        otherIcon.classList.remove("fa-pause");
+                        otherIcon.classList.add("fa-play");
                     }
-                </td>
-                <td>
-                    <a asp-action="Show" asp-route-id="@s.Id" class="btn btn-sm btn-info">Show</a>
-                </td>
-            </tr>
+                }
+            });
+
+            audio.play();
+            icon.classList.remove("fa-play");
+            icon.classList.add("fa-pause");
+        }
+        else {
+            audio.pause();
+            icon.classList.remove("fa-pause");
+            icon.classList.add("fa-play");
         }
     }
-    </tbody>
-</table>
+</script>
+
+<style>
+    .song-card:hover {
+        background: #f1f1f1;
+        transition: 0.2s;
+    }
+
+    .play-btn i {
+        font-size: 20px;
+    }
+</style>
