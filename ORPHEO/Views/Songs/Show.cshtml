@@ -8,6 +8,7 @@
 <h2>@Model.Title</h2>
 <p><strong>Artist:</strong> @Model.Artist</p>
 <p><strong>Url:</strong> <a href="@Model.Url" target="_blank">@Model.Url</a></p>
+<p><strong>Data Publicarii:</strong> @Model.DataPublicarii </p>
 <p><strong>Adăugat de:</strong> @Model.User?.UserName</p>
 
 @if (Model.SongTags != null && Model.SongTags.Any())
