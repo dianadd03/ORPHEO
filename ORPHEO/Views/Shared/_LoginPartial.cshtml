@@ -5,8 +5,57 @@
 @inject UserManager<ApplicationUser> UserManager
 
 <ul class="navbar-nav">
+
+    @if (User.IsInRole("Admin"))
+    {
+
+        <li class="nav-item d-flex align-items-center">
+            <img src="~/images/administrator.png" style="height:24px;" class="me-1" />
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-dark"
+               asp-controller="RoleRequests"
+               asp-action="PendingRequests">
+                Role Requests
+            </a>
+        </li>
+    }
+
+
     @if (SignInManager.IsSignedIn(User))
     {
+
+        var currentUser = await UserManager.GetUserAsync(User);
+        var roles = await UserManager.GetRolesAsync(currentUser);
+
+
+
+        if (roles.Contains("User"))
+        {
+
+            <li class="nav-item d-flex align-items-center">
+                <img src="~/images/music.png" style="height:24px;" class="me-1" />
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-dark"
+                   asp-controller="RoleRequests"
+                   asp-action="RequestArtistRole">
+                    Request Artist Role
+                </a>
+            </li>
+        }
+
+        if(roles.Contains("Artist"))
+        {
+            <li class="nav-item d-flex align-items-center">
+                <img src="~/images/artist.png" style="height:24px;" class="me-1" />
+            </li>
+        }
+
+        
+
         <li class="nav-item">
             <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
         </li>

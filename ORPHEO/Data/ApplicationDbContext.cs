@@ -23,6 +23,9 @@ namespace Orpheo.Data
         public DbSet<SessionRoom> SessionRooms { get; set; }
         public DbSet<SessionRoomUser> SessionRoomUsers { get; set; }
 
+        public DbSet<RoleRequest> RoleRequests { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
