@@ -17,7 +17,13 @@ namespace Orpheo.Controllers
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
 
-        [Authorize(Roles = "Admin,Artist,User")]
+        // daca scriu cu Authorize, atunci vor avea permisiuni doar tipurile de utilizatori 
+        // pe care ii specific, se neglijeaza cel neinregistrat
+        //[Authorize(Roles = "Admin,Artist,User")]
+        
+        // cu AllowAnnonymous dau voie tuturor tipurilor de ut, dar si celor neinregistrati
+        [AllowAnonymous]
+        // afisez toate cantecele
         public IActionResult Index()
         {
             var songs = db.Songs
@@ -38,8 +44,10 @@ namespace Orpheo.Controllers
             return View();
         }
 
-        [Authorize(Roles = "Admin,Artist,User")]
+        //[Authorize(Roles = "Admin,Artist,User")]
+        [AllowAnonymous]
         [HttpGet]
+        // afisez un cantec anume
         public IActionResult Show(int id)
         {
             Song? song = db.Songs
@@ -113,6 +121,9 @@ namespace Orpheo.Controllers
         {
             song.UserId = _userManager.GetUserId(User);
             ModelState.Remove("UserId");
+
+            song.DataPublicarii = DateTime.Now;
+
             if (ModelState.IsValid)
             {
                 if (SelectedTags != null && SelectedTags.Length > 0)
