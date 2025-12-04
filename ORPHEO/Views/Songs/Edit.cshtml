@@ -9,7 +9,7 @@
 
 <h2>Editează cântec</h2>
 
-<form asp-action="Edit" method="post">
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="Id" />
 
     <div asp-validation-summary="All" class="text-danger"></div>
@@ -26,11 +26,19 @@
         <span asp-validation-for="Artist" class="text-danger"></span>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="Url" class="form-label"></label>
-        <input asp-for="Url" class="form-control" />
-        <span asp-validation-for="Url" class="text-danger"></span>
+    <div class="form-group mt-3">
+        <label>Replace MP3 file (optional)</label>
+        <input type="file" name="NewAudioFile" accept=".mp3" class="form-control" />
     </div>
+
+    @if (Model.Url != null)
+    {
+        <p class="mt-2"><strong>Current file:</strong></p>
+        <audio controls style="width:100%;">
+            <source src="@Model.Url" type="audio/mpeg">
+        </audio>
+    }
+
 
     <div class="mb-3">
         <label class="form-label">Taguri</label>

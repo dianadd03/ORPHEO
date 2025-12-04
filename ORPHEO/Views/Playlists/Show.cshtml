@@ -1,17 +1,31 @@
 ﻿@model Orpheo.Models.Playlist
 
-<h2>@Model.Name</h2>
+<h2>
+    @Model.Name
+
+    @if (Model.IsPublic)
+    {
+        <i class="bi bi-unlock" title="Public playlist"></i>
+    }
+    else
+    {
+        <i class="bi bi-lock" title="Private playlist"></i>
+    }
+</h2>
+
 
 <p><strong>Proprietar:</strong> @Model.User.UserName</p>
 
 @if (ViewBag.AfisareButoane == true)
 {
     <p>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editează</a>
+        <div class="d-flex justify-content-end gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning"><i class="bi bi-pencil-square"></i>Editează</a>
 
         <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
-            <button type="submit" class="btn btn-danger">Șterge</button>
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash-fill"></i>Șterge</button>
         </form>
+        </div>
     </p>
 }
 
@@ -71,6 +85,19 @@
 else
 {
     <p><em>Nu există cântece în playlist.</em></p>
+}
+@if (ViewBag.AddSongMessage != null)
+{
+    var msg = ViewBag.AddSongMessage.ToString();
+
+    if (msg.Contains("există deja"))
+    {
+        <div class="alert alert-warning">@msg</div>
+    }
+    else
+    {
+        <div class="alert alert-success">@msg</div>
+    }
 }
 
 @if (ViewBag.AfisareButoane == true)

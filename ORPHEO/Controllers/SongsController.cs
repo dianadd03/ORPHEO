@@ -40,7 +40,7 @@ namespace Orpheo.Controllers
                 ViewBag.Message = TempData["message"];
                 ViewBag.AlertType = TempData["messageType"];
             }
-
+            SetAccessRights();
             return View();
         }
 
@@ -117,40 +117,87 @@ namespace Orpheo.Controllers
 
         [Authorize(Roles = "Admin,Artist")]
         [HttpPost]
-        public IActionResult New(Song song, int[] SelectedTags)
+        public async Task<IActionResult> New(Song song, int[] SelectedTags, IFormFile AudioFile)
+
         {
             song.UserId = _userManager.GetUserId(User);
             ModelState.Remove("UserId");
+            ModelState.Remove("Url");
+
 
             song.DataPublicarii = DateTime.Now;
 
+            // VALIDARE ARTIST EXISTENT CU ROL DE "Artist"
+            var artistUser = db.Users
+                .Where(u => u.Name == song.Artist)
+                .FirstOrDefault();
+
+            if (artistUser == null)
+            {
+                ModelState.AddModelError("Artist", "Artistul introdus nu există în baza de date.");
+            }
+            else
+            {
+                // Verificăm dacă userul are rolul "Artist"
+                var artistRoleId = db.Roles
+                    .Where(r => r.Name == "Artist")
+                    .Select(r => r.Id)
+                    .FirstOrDefault();
+
+                bool userIsArtist = db.UserRoles
+                    .Any(ur => ur.UserId == artistUser.Id && ur.RoleId == artistRoleId);
+
+                if (!userIsArtist)
+                {
+                    ModelState.AddModelError("Artist", "Utilizatorul există, dar nu are rolul Artist.");
+                }
+            }
+
+            if (AudioFile == null || AudioFile.Length == 0)
+            {
+                ModelState.AddModelError("AudioFile", "Trebuie să încărcați un fișier MP3.");
+            }
+            else if (!AudioFile.FileName.EndsWith(".mp3"))
+            {
+                ModelState.AddModelError("AudioFile", "Fișierul trebuie să fie MP3.");
+            }
+
             if (ModelState.IsValid)
             {
+                var uploadPath = Path.Combine("wwwroot/uploads/songs");
+                Directory.CreateDirectory(uploadPath);
+
+                var fileName = Guid.NewGuid() + Path.GetExtension(AudioFile.FileName);
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await AudioFile.CopyToAsync(stream);
+                }
+
+                song.Url = "/uploads/songs/" + fileName;
+
+                // TAG-URI
                 if (SelectedTags != null && SelectedTags.Length > 0)
                 {
                     song.SongTags = new List<SongTag>();
                     foreach (var tagId in SelectedTags)
                     {
-                        song.SongTags.Add(new SongTag
-                        {
-                            TagId = tagId
-                        });
+                        song.SongTags.Add(new SongTag { TagId = tagId });
                     }
                 }
 
                 db.Songs.Add(song);
                 db.SaveChanges();
 
-                TempData["message"] = "Cântecul a fost adăugat";
+                TempData["message"] = "Song has been added";
                 TempData["messageType"] = "alert-success";
 
                 return RedirectToAction("Index");
             }
-            else
-            {
-                ViewBag.Tags = GetAllTags();
-                return View(song);
-            }
+
+            ViewBag.Tags = GetAllTags();
+            return View(song);
         }
 
         [Authorize(Roles = "Admin,Artist")]
@@ -183,60 +230,97 @@ namespace Orpheo.Controllers
 
         [Authorize(Roles = "Admin,Artist")]
         [HttpPost]
-        public IActionResult Edit(int id, Song requestSong, int[] SelectedTags)
+        public async Task<IActionResult> Edit(int id, Song requestSong, int[] SelectedTags, IFormFile NewAudioFile)
         {
             Song? song = db.Songs
-                           .Include(s => s.SongTags)
-                           .Where(s => s.Id == id)
-                           .FirstOrDefault();
+                .Include(s => s.SongTags)
+                .FirstOrDefault(s => s.Id == id);
 
             if (song is null)
-            {
                 return NotFound();
-            }
+
             ModelState.Remove("UserId");
+            ModelState.Remove("Url");
+
             requestSong.UserId = song.UserId;
 
-            if (song.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
+            // Permisiuni
+            if (!(song.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin")))
             {
-                if (ModelState.IsValid)
-                {
-                    song.Title = requestSong.Title;
-                    song.Artist = requestSong.Artist;
-                    song.Url = requestSong.Url;
-
-                    song.SongTags.Clear();
-
-                    if (SelectedTags != null && SelectedTags.Length > 0)
-                    {
-                        foreach (var tagId in SelectedTags)
-                        {
-                            song.SongTags.Add(new SongTag
-                            {
-                                SongId = song.Id,
-                                TagId = tagId
-                            });
-                        }
-                    }
-
-                    db.SaveChanges();
-
-                    TempData["message"] = "Cântecul a fost modificat";
-                    TempData["messageType"] = "alert-success";
-
-                    return RedirectToAction("Index");
-                }
-
-                ViewBag.Tags = GetAllTags();
-                ViewBag.SelectedTags = song.SongTags.Select(t => t.TagId).ToList();
-
-                return View(song);
+                TempData["message"] = "Nu aveți dreptul să modificați un cântec care nu vă aparține!";
+                TempData["messageType"] = "alert-danger";
+                return RedirectToAction("Index");
             }
 
-            TempData["message"] = "Nu aveți dreptul să modificați un cântec care nu vă aparține!";
-            TempData["messageType"] = "alert-danger";
-            return RedirectToAction("Index");
+            // VALIDARE ARTIST
+            var artistUser = db.Users.FirstOrDefault(u => u.Name == requestSong.Artist);
+            if (artistUser == null)
+                ModelState.AddModelError("Artist", "Artistul introdus nu există în baza de date.");
+            else
+            {
+                var artistRoleId = db.Roles.Where(r => r.Name == "Artist").Select(r => r.Id).FirstOrDefault();
+                bool userIsArtist = db.UserRoles.Any(ur => ur.UserId == artistUser.Id && ur.RoleId == artistRoleId);
+                if (!userIsArtist)
+                    ModelState.AddModelError("Artist", "Utilizatorul există, dar nu are rolul de Artist.");
+            }
+
+            if (ModelState.IsValid)
+            {
+                if (NewAudioFile != null && NewAudioFile.Length > 0)
+                {
+                    if (!NewAudioFile.FileName.EndsWith(".mp3"))
+                    {
+                        ModelState.AddModelError("NewAudioFile", "Fișierul trebuie să fie MP3.");
+                        ViewBag.Tags = GetAllTags();
+                        return View(song);
+                    }
+
+                    // Ștergere vechi
+                    if (!string.IsNullOrEmpty(song.Url))
+                    {
+                        var oldPath = "wwwroot" + song.Url.Replace("/", "\\");
+                        if (System.IO.File.Exists(oldPath))
+                            System.IO.File.Delete(oldPath);
+                    }
+
+                    // Upload nou
+                    var uploadPath = Path.Combine("wwwroot/uploads/songs");
+                    Directory.CreateDirectory(uploadPath);
+
+                    var fileName = Guid.NewGuid() + Path.GetExtension(NewAudioFile.FileName);
+                    var filePath = Path.Combine(uploadPath, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await NewAudioFile.CopyToAsync(stream);
+                    }
+
+                    song.Url = "/uploads/songs/" + fileName;
+                }
+
+                song.Title = requestSong.Title;
+                song.Artist = requestSong.Artist;
+
+                song.SongTags.Clear();
+                if (SelectedTags != null && SelectedTags.Length > 0)
+                {
+                    foreach (var tagId in SelectedTags)
+                        song.SongTags.Add(new SongTag { SongId = song.Id, TagId = tagId });
+                }
+
+                db.SaveChanges();
+
+                TempData["message"] = "Cântecul a fost modificat";
+                TempData["messageType"] = "alert-success";
+
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Tags = GetAllTags();
+            ViewBag.SelectedTags = song.SongTags.Select(t => t.TagId).ToList();
+            return View(song);
         }
+
 
 
         [Authorize(Roles = "Admin,Artist")]

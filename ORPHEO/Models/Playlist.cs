@@ -20,5 +20,8 @@ namespace Orpheo.Models
 
         // 1–M: un playlist poate fi folosit de mai multe SessionRooms
         public virtual ICollection<SessionRoom> SessionRooms { get; set; } = new List<SessionRoom>();
+        public bool IsPublic { get; set; } = true;
+        public string? ImagePath { get; set; }
+
     }
 }
