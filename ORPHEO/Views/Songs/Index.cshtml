@@ -4,6 +4,17 @@
 
 <h2 class="mb-4">All Songs</h2>
 
+<form method="get" asp-action="Index" class="d-flex mb-4">
+    <input type="text"
+           name="search"
+           class="form-control"
+           placeholder="Search song..."
+           value="@ViewBag.Search" />
+
+    <button class="btn btn-primary ms-2">Search</button>
+</form>
+
+
 @if (ViewBag.Message != null)
 {
     <div class="alert @ViewBag.AlertType mt-2">
@@ -47,8 +58,60 @@
            class="btn btn-outline-secondary ms-3">
             Details
         </a>
+
+        <!-- Add to playlist (only for logged users) -->
+        @if (User.Identity.IsAuthenticated)
+        {
+            <button class="btn btn-success ms-3"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addToPlaylistModal"
+                    data-song-id="@song.Id">
+                Add to playlist
+            </button>
+        }
+
     </div>
 }
+
+<div class="modal fade" id="addToPlaylistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <form asp-controller="Playlists" asp-action="AddSongToPlaylist" method="post">
+                <input type="hidden" id="modalSongId" name="SongId" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add song to playlist</h5>
+                </div>
+
+                <div class="modal-body">
+
+                    @if (((List<Playlist>)ViewBag.Playlists)?.Any() == true)
+                    {
+
+                        <label>Playlist name:</label>
+                        <input class="form-control" name="NewPlaylistName" placeholder="Enter playlist name..." required />
+
+                    }
+                    else
+                    {
+                        <p>You don't have any playlists yet.</p>
+                        <label>Create new playlist:</label>
+                        <input class="form-control" name="NewPlaylistName" />
+                    }
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
 
 <!-- Script Play/Pause -->
 <script>
@@ -83,6 +146,26 @@
         }
     }
 </script>
+
+
+<script>
+    const modal = document.getElementById("addToPlaylistModal");
+
+    modal.addEventListener("show.bs.modal", function (event) {
+
+        let btn = event.relatedTarget;
+        let songId = btn.getAttribute("data-song-id");
+        document.getElementById("modalSongId").value = songId;
+
+        // 🔥 Resetăm dropdown-ul la opțiunea goală
+        let select = modal.querySelector("select[name='PlaylistId']");
+        if (select) {
+            select.selectedIndex = 0; // selectează "Choose playlist..."
+        }
+    });
+</script>
+
+
 
 <style>
     .song-card:hover {

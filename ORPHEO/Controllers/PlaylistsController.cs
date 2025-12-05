@@ -363,5 +363,53 @@ namespace Orpheo.Controllers
 
             return selectList;
         }
+
+        [Authorize(Roles = "User,Artist,Admin")]
+        [HttpPost]
+        public IActionResult AddSongToPlaylist(int SongId, string NewPlaylistName)
+        {
+            string userId = _userManager.GetUserId(User);
+
+            // 🔥 1. Căutăm playlistul cu acest nume la user
+            var playlist = db.Playlists
+                .FirstOrDefault(p => p.UserId == userId &&
+                                     p.Name.Trim().ToLower() == NewPlaylistName.Trim().ToLower());
+
+            // 🔥 2. Dacă NU există → îl creăm
+            if (playlist == null)
+            {
+                playlist = new Playlist
+                {
+                    Name = NewPlaylistName.Trim(),
+                    UserId = userId,
+                    IsPublic = false
+                };
+
+                db.Playlists.Add(playlist);
+                db.SaveChanges();
+            }
+
+            // 🔥 3. Verificăm dacă melodia este deja în playlist
+            bool exists = db.PlaylistSongs
+                .Any(ps => ps.PlaylistId == playlist.Id && ps.SongId == SongId);
+
+            if (!exists)
+            {
+                db.PlaylistSongs.Add(new PlaylistSong
+                {
+                    PlaylistId = playlist.Id,
+                    SongId = SongId
+                });
+
+                db.SaveChanges();
+            }
+
+            TempData["message"] = "Song added to playlist!";
+            TempData["messageType"] = "alert-success";
+
+            return RedirectToAction("Index", "Songs");
+        }
+
+
     }
 }
