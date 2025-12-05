@@ -1,0 +1,43 @@
+﻿@model IEnumerable<Orpheo.Models.RoleRequest>
+
+<h2 class="mb-4">Pending Role Requests</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">There are no pending requests.</div>
+}
+else
+{
+    <div class="list-group">
+
+        @foreach (var req in Model)
+        {
+            <div class="list-group-item d-flex justify-content-between align-items-center mb-2 shadow-sm rounded">
+
+                <div>
+                    <h5>User: @req.User.UserName</h5>
+                    <p class="mb-1 text-muted">
+                        Email: @req.User.Email <br />
+                        Requested Role: <strong>@req.RequestedRole</strong> <br />
+                        Request Date: @req.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                    </p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a class="btn btn-success"
+                       asp-action="Approve"
+                       asp-route-id="@req.Id">
+                        Approve
+                    </a>
+
+                    <a class="btn btn-danger"
+                       asp-action="Reject"
+                       asp-route-id="@req.Id">
+                        Reject
+                    </a>
+                </div>
+
+            </div>
+        }
+    </div>
+}

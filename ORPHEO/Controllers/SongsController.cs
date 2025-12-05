@@ -24,15 +24,32 @@ namespace Orpheo.Controllers
         // cu AllowAnnonymous dau voie tuturor tipurilor de ut, dar si celor neinregistrati
         [AllowAnonymous]
         // afisez toate cantecele
-        public IActionResult Index()
+        public IActionResult Index(string search)
         {
-            var songs = db.Songs
-                          .Include(s => s.User)
-                          .Include(s => s.SongTags)
-                              .ThenInclude(st => st.Tag)
-                          .OrderByDescending(s => s.Id)
-                          .ToList();
+            var songsQuery = db.Songs
+                .Include(s => s.User)
+                .Include(s => s.SongTags)
+                    .ThenInclude(st => st.Tag)
+                .AsQueryable();
 
+            // Dacă există o căutare -> căutăm exact după titlu
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                songsQuery = songsQuery.Where(s => s.Title.ToLower() == search.ToLower());
+            }
+
+            var songs = songsQuery
+                .OrderByDescending(s => s.Id)
+                .ToList();
+
+            // Playlist-urile userului doar dacă e logat
+            if (User.Identity.IsAuthenticated)
+            {
+                string userId = _userManager.GetUserId(User);
+                ViewBag.Playlists = db.Playlists.Where(p => p.UserId == userId).ToList();
+            }
+
+            ViewBag.Search = search;
             ViewBag.Songs = songs;
 
             if (TempData.ContainsKey("message"))
@@ -40,9 +57,11 @@ namespace Orpheo.Controllers
                 ViewBag.Message = TempData["message"];
                 ViewBag.AlertType = TempData["messageType"];
             }
+
             SetAccessRights();
             return View();
         }
+
 
         //[Authorize(Roles = "Admin,Artist,User")]
         [AllowAnonymous]
