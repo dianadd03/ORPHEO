@@ -245,6 +245,22 @@ namespace Orpheo.Controllers
             return RedirectToAction("Index");
         }
 
+        public IActionResult Play(int id)
+        {
+            var playlist = db.Playlists
+                .Include(p => p.PlaylistSongs)
+                    .ThenInclude(ps => ps.Song)
+                .FirstOrDefault(p => p.Id == id);
+
+            if (playlist == null)
+            {
+                return NotFound();
+            }
+
+            return View(playlist);
+        }
+
+
 
         [Authorize(Roles = "User,Artist,Admin")]
         [HttpPost]
@@ -370,12 +386,10 @@ namespace Orpheo.Controllers
         {
             string userId = _userManager.GetUserId(User);
 
-            // 🔥 1. Căutăm playlistul cu acest nume la user
             var playlist = db.Playlists
                 .FirstOrDefault(p => p.UserId == userId &&
                                      p.Name.Trim().ToLower() == NewPlaylistName.Trim().ToLower());
 
-            // 🔥 2. Dacă NU există → îl creăm
             if (playlist == null)
             {
                 playlist = new Playlist
@@ -389,7 +403,6 @@ namespace Orpheo.Controllers
                 db.SaveChanges();
             }
 
-            // 🔥 3. Verificăm dacă melodia este deja în playlist
             bool exists = db.PlaylistSongs
                 .Any(ps => ps.PlaylistId == playlist.Id && ps.SongId == SongId);
 
