@@ -1,6 +1,9 @@
 ﻿@model Orpheo.Models.Song
 @using Orpheo.Models
 
+
+
+
 @{
     ViewData["Title"] = "Detalii cântec";
 }
@@ -21,6 +24,9 @@
         }
     </p>
 }
+
+
+
 
 @* Butoane edit/delete pentru cântec *@
 @if (ViewBag.AfisareButoane == true && Model.UserId == ViewBag.UserCurent)

@@ -29,3 +29,15 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.btn-pink {
+    background-color: #ff80b5;
+    color: white;
+    border: 2px solid #ff80b5;
+}
+
+.btn-outline-pink {
+    background-color: white;
+    color: #ff80b5;
+    border: 2px solid #ff80b5;
+}

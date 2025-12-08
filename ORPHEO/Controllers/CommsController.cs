@@ -65,7 +65,7 @@ namespace Orpheo.Controllers
         }
 
 
-        [Authorize(Roles = "User,Artist")]
+        [Authorize(Roles = "User,Artist,Admin")]
         public IActionResult Edit(int id)
         {
             Comm? comm = db.Comms.Find(id);

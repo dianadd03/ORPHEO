@@ -25,6 +25,8 @@ namespace Orpheo.Data
 
         public DbSet<RoleRequest> RoleRequests { get; set; }
 
+        public DbSet<SongVote> SongVotes { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
