@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Orpheo.Data;
 using Orpheo.Models;
+using System.Globalization;
 
 namespace Orpheo.Controllers
 {
@@ -54,6 +55,10 @@ namespace Orpheo.Controllers
                 .Include(p => p.PlaylistSongs).ThenInclude(ps => ps.Song)
                 .Include(p => p.SessionRooms)
                 .FirstOrDefault(p => p.Id == id);
+
+            if (playlist == null)
+                return NotFound();
+
             if (!playlist.IsPublic &&
                         playlist.UserId != _userManager.GetUserId(User) &&
                         !User.IsInRole("Admin"))
@@ -64,8 +69,7 @@ namespace Orpheo.Controllers
             }
 
 
-            if (playlist == null)
-                return NotFound();
+           
 
 
             if (TempData.ContainsKey("AddSongMessage"))
@@ -123,42 +127,41 @@ namespace Orpheo.Controllers
 
         [Authorize(Roles = "User,Artist,Admin")]
         [HttpGet]
-        public IActionResult New()
+        public IActionResult New(int? songId)
         {
+            ViewBag.SongId = songId;
             Playlist playlist = new Playlist();
             return View(playlist);
         }
 
+
         [Authorize(Roles = "User,Artist,Admin")]
         [HttpPost]
-        public IActionResult New(Playlist playlist, IFormFile ImageFile)
+        public IActionResult New(Playlist playlist, IFormFile ImageFile, int? SongId)
         {
             playlist.UserId = _userManager.GetUserId(User);
             ModelState.Remove("UserId");
 
-            if (ImageFile != null && ImageFile.Length > 0)
-            {
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/playlists");
-                Directory.CreateDirectory(uploadsFolder);
-
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
-                string filePath = Path.Combine(uploadsFolder, fileName);
-
-                using (var stream = System.IO.File.Create(filePath))
-                {
-                    ImageFile.CopyTo(stream);
-                }
-
-                playlist.ImagePath = "/uploads/playlists/" + fileName;
-            }
-
+            // Upload imagine (există deja)
 
             if (ModelState.IsValid)
             {
                 db.Playlists.Add(playlist);
                 db.SaveChanges();
 
-                TempData["message"] = "Playlist-ul a fost creat!";
+                // 🔥 dacă a venit songId, îl adăugăm automat în playlist
+                if (SongId != null)
+                {
+                    db.PlaylistSongs.Add(new PlaylistSong
+                    {
+                        PlaylistId = playlist.Id,
+                        SongId = SongId.Value
+                    });
+
+                    db.SaveChanges();
+                }
+
+                TempData["message"] = "Playlist creat!";
                 TempData["messageType"] = "alert-success";
 
                 return RedirectToAction("Index");
@@ -166,6 +169,7 @@ namespace Orpheo.Controllers
 
             return View(playlist);
         }
+
 
 
         [Authorize(Roles = "User,Artist,Admin")]
@@ -242,6 +246,22 @@ namespace Orpheo.Controllers
             TempData["messageType"] = "alert-danger";
             return RedirectToAction("Index");
         }
+
+        public IActionResult Play(int id)
+        {
+            var playlist = db.Playlists
+                .Include(p => p.PlaylistSongs)
+                    .ThenInclude(ps => ps.Song)
+                .FirstOrDefault(p => p.Id == id);
+
+            if (playlist == null)
+            {
+                return NotFound();
+            }
+
+            return View(playlist);
+        }
+
 
 
         [Authorize(Roles = "User,Artist,Admin")]
@@ -368,12 +388,10 @@ namespace Orpheo.Controllers
         {
             string userId = _userManager.GetUserId(User);
 
-            // 🔥 1. Căutăm playlistul cu acest nume la user
             var playlist = db.Playlists
                 .FirstOrDefault(p => p.UserId == userId &&
                                      p.Name.Trim().ToLower() == NewPlaylistName.Trim().ToLower());
 
-            // 🔥 2. Dacă NU există → îl creăm
             if (playlist == null)
             {
                 playlist = new Playlist
@@ -387,7 +405,6 @@ namespace Orpheo.Controllers
                 db.SaveChanges();
             }
 
-            // 🔥 3. Verificăm dacă melodia este deja în playlist
             bool exists = db.PlaylistSongs
                 .Any(ps => ps.PlaylistId == playlist.Id && ps.SongId == SongId);
 

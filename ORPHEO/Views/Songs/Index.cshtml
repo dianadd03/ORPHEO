@@ -1,6 +1,10 @@
 ﻿@{
     ViewData["Title"] = "Songs";
 }
+@using Orpheo.Data
+@using Microsoft.AspNetCore.Identity
+@inject ApplicationDbContext _context
+@inject UserManager<ApplicationUser> _userManager
 
 <h2 class="mb-4">All Songs</h2>
 
@@ -28,50 +32,78 @@
     </a>
 }
 
-<!-- Lista de melodii -->
 @foreach (var song in ViewBag.Songs)
 {
-    <div class="song-card shadow-sm p-3 mb-4 d-flex align-items-center rounded"
-         style="background:#f9f9f9;">
+    <div class="song-card p-3 mb-3 border rounded">
 
-        <!-- Icon Play -->
-        <button class="btn btn-light play-btn me-3"
-                onclick="togglePlay('@song.Id')"
-                style="width:50px;height:50px;border-radius:50%;
-                           box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-            <i id="icon-@song.Id" class="fa-solid fa-play"></i>
-        </button>
+        <h4>@song.Title – @song.Artist</h4>
 
-        <!-- Song Info -->
-        <div style="flex-grow:1;">
-            <h5 class="mb-1">@song.Title</h5>
-            <p class="text-muted mb-0">@song.Artist</p>
-        </div>
+        <div class="d-flex align-items-center gap-2 mt-2">
 
-        <!-- Audio Player ascuns -->
-        <audio id="audio-@song.Id" style="display:none;">
-            <source src="@song.Url" type="audio/mpeg" />
-        </audio>
-
-        <!-- Buton Details -->
-        <a href="/Songs/Show/@song.Id"
-           class="btn btn-outline-secondary ms-3">
-            Details
-        </a>
-
-        <!-- Add to playlist (only for logged users) -->
-        @if (User.Identity.IsAuthenticated)
-        {
-            <button class="btn btn-success ms-3"
-                    data-bs-toggle="modal"
-                    data-bs-target="#addToPlaylistModal"
-                    data-song-id="@song.Id">
-                Add to playlist
+            <button class="btn btn-primary" onclick="togglePlay(@song.Id)">
+                <i id="icon-@song.Id" class="fa-solid fa-play"></i> Ascultă
             </button>
-        }
+
+            <audio id="audio-@song.Id" src="@song.Url"></audio>
+
+            
+            @* Formular pentru adăugare în playlist *@
+            @if (User.Identity.IsAuthenticated)
+            {
+                <form method="post" action="/Playlists/AddSong" class="d-flex gap-2 ms-3">
+                    <input type="hidden" name="songId" value="@song.Id" />
+
+                    <select name="playlistId" class="form-select" style="width:180px;">
+                        <option disabled selected>Select playlist...</option>
+                        @foreach (var p in ViewBag.Playlists)
+                        {
+                            <option value="@p.Id">@p.Name</option>
+                        }
+                    </select>
+
+                    <button type="submit" class="btn btn-success">
+                        ➕ Adaugă
+                    </button>
+                </form>
+            }
+
+            @* ❤️ / 👎 Sistem votare *@
+            @{
+                var userId = _userManager.GetUserId(User);
+                int songId = song.Id;
+
+                var vote = _context.SongVotes
+                .FirstOrDefault(v => v.SongId == songId && v.UserId == userId);
+
+                bool? isLike = vote?.IsLike;   // true = like, false = dislike, null = nevotat
+            }
+
+            <a asp-action="Like"
+               asp-route-id="@song.Id"
+               class="btn @(isLike == true ? "btn-pink" : "btn-outline-pink")">
+                ❤️
+            </a>
+
+            <a asp-action="Dislike"
+               asp-route-id="@song.Id"
+               class="btn @(isLike == false ? "btn-pink" : "btn-outline-pink")">
+                👎
+            </a>
+
+
+            @if (User.Identity.IsAuthenticated)
+            {
+                <a href="/Playlists/New?songId=@song.Id" class="btn btn-warning">
+                    ➕ Playlist nou
+                </a>
+            }
+
+        </div>
 
     </div>
 }
+
+
 
 <div class="modal fade" id="addToPlaylistModal" tabindex="-1">
     <div class="modal-dialog">
@@ -113,7 +145,6 @@
 </div>
 
 
-<!-- Script Play/Pause -->
 <script>
     function togglePlay(id) {
         var audio = document.getElementById("audio-" + id);
@@ -157,7 +188,6 @@
         let songId = btn.getAttribute("data-song-id");
         document.getElementById("modalSongId").value = songId;
 
-        // 🔥 Resetăm dropdown-ul la opțiunea goală
         let select = modal.querySelector("select[name='PlaylistId']");
         if (select) {
             select.selectedIndex = 0; // selectează "Choose playlist..."

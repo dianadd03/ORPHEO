@@ -1,5 +1,7 @@
 ﻿@model Orpheo.Models.Playlist
 
+
+
 <h2>
     @Model.Name
 
@@ -62,13 +64,30 @@
 
 <h4>Cântece în playlist</h4>
 
+
 @if (Model.PlaylistSongs.Any())
 {
-    <ul class="list-group">
-        @foreach (var ps in Model.PlaylistSongs)
-        {
-            <li class="list-group-item d-flex justify-content-between">
-                <span>@ps.Song.Title</span>
+    @foreach (var ps in Model.PlaylistSongs)
+    {
+        var song = ps.Song;
+
+        <div class="song-card p-3 mb-3 border rounded d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="mb-1">@song.Title</h5>
+                <small class="text-muted">@song.Artist</small>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+
+                <button type="button"
+                        class="btn btn-primary"
+                        onclick="togglePlaylistPlay(@ps.SongId)">
+                    <i id="icon-playlist-@ps.SongId" class="bi bi-play-fill"></i>
+                </button>
+
+                 
+                <audio id="audio-playlist-@ps.SongId" src="@song.Url"></audio>
 
                 @if (ViewBag.AfisareButoane == true)
                 {
@@ -78,14 +97,17 @@
                         <button class="btn btn-sm btn-outline-danger">Șterge</button>
                     </form>
                 }
-            </li>
-        }
-    </ul>
+
+            </div>
+
+        </div>
+    }
 }
 else
 {
     <p><em>Nu există cântece în playlist.</em></p>
 }
+
 @if (ViewBag.AddSongMessage != null)
 {
     var msg = ViewBag.AddSongMessage.ToString();
@@ -121,3 +143,39 @@ else
 
 <br />
 <a asp-action="Index" class="btn btn-secondary">Înapoi</a>
+
+
+            <script>
+            function togglePlaylistPlay(id) {
+                var audio = document.getElementById("audio-playlist-" + id);
+                var icon = document.getElementById("icon-playlist-" + id);
+
+                if (!audio || !icon) return;
+
+                if (audio.paused) {
+
+                    // Oprim orice altă melodie din playlist
+                    document.querySelectorAll("audio[id^='audio-playlist-']").forEach(a => {
+                        if (a !== audio) {
+                            a.pause();
+                            a.currentTime = 0;
+
+                            let otherId = a.id.replace("audio-playlist-", "");
+                            let otherIcon = document.getElementById("icon-playlist-" + otherId);
+                            if (otherIcon) {
+                                otherIcon.classList.remove("bi-pause-fill");
+                                otherIcon.classList.add("bi-play-fill");
+                            }
+                        }
+                    });
+
+                    audio.play();
+                    icon.classList.remove("bi-play-fill");
+                    icon.classList.add("bi-pause-fill");
+                } else {
+                    audio.pause();
+                    icon.classList.remove("bi-pause-fill");
+                    icon.classList.add("bi-play-fill");
+                }
+            }
+        </script>

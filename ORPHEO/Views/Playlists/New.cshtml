@@ -2,7 +2,16 @@
 
 <h2>Creează playlist</h2>
 
-<form asp-action="New" method="post" enctype="multipart/form-data">
+<form asp-action="New"
+      asp-route-SongId="@ViewBag.SongId"
+      method="post"
+      enctype="multipart/form-data">
+
+
+    @if (ViewBag.SongId != null)
+    {
+        <input type="hidden" name="SongId" value="@ViewBag.SongId" />
+    }
 
     <div class="form-group">
         <label asp-for="Name" class="form-label"></label>

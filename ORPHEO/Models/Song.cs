@@ -31,5 +31,7 @@ namespace Orpheo.Models
 
         // One-to-many cu Comm
         public virtual ICollection<Comm> Comms { get; set; } = new List<Comm>();
+
+
     }
 }

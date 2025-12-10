@@ -13,14 +13,16 @@ namespace Orpheo.Controllers
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager) : Controller
     {
+        private readonly ApplicationDbContext _context = context;
         private readonly ApplicationDbContext db = context;
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
 
+
         // daca scriu cu Authorize, atunci vor avea permisiuni doar tipurile de utilizatori 
         // pe care ii specific, se neglijeaza cel neinregistrat
         //[Authorize(Roles = "Admin,Artist,User")]
-        
+
         // cu AllowAnnonymous dau voie tuturor tipurilor de ut, dar si celor neinregistrati
         [AllowAnonymous]
         // afisez toate cantecele
@@ -61,6 +63,109 @@ namespace Orpheo.Controllers
             SetAccessRights();
             return View();
         }
+
+
+        public async Task<IActionResult> Like(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            // căutăm votul existent
+            var vote = await _context.SongVotes
+                .FirstOrDefaultAsync(v => v.SongId == id && v.UserId == userId);
+
+            if (vote == null)
+            {
+                vote = new SongVote
+                {
+                    SongId = id,
+                    UserId = userId,
+                    IsLike = true
+                };
+                _context.SongVotes.Add(vote);
+            }
+            else
+            {
+                vote.IsLike = true;
+            }
+
+            // găsim playlistul Favorites al userului
+            var favorites = await _context.Playlists
+                .Include(p => p.PlaylistSongs)
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.Name == "Favorites");
+
+            // dacă userul NU are playlist Favorites → îl creăm ACUM
+            if (favorites == null)
+            {
+                favorites = new Playlist
+                {
+                    Name = "Favorites",
+                    UserId = userId,
+                    IsPublic = false,
+                    ImagePath = "/images/favorites.png",
+                    PlaylistSongs = new List<PlaylistSong>()
+                };
+
+                _context.Playlists.Add(favorites);
+                await _context.SaveChangesAsync();
+                // acum favorites are Id -> putem adăuga melodii în el
+            }
+
+            // adăugăm melodia în playlist (dacă nu există deja)
+            if (!favorites.PlaylistSongs.Any(ps => ps.SongId == id))
+            {
+                favorites.PlaylistSongs.Add(new PlaylistSong
+                {
+                    PlaylistId = favorites.Id,
+                    SongId = id
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+
+
+        public async Task<IActionResult> Dislike(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var vote = await _context.SongVotes
+                .FirstOrDefaultAsync(v => v.SongId == id && v.UserId == userId);
+
+            if (vote == null)
+            {
+                vote = new SongVote
+                {
+                    SongId = id,
+                    UserId = userId,
+                    IsLike = false
+                };
+                _context.SongVotes.Add(vote);
+            }
+            else
+            {
+                vote.IsLike = false;
+            }
+
+            // găsim playlistul Favorites
+            var favorites = await _context.Playlists
+                .Include(p => p.PlaylistSongs)
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.Name == "Favorites");
+
+            if (favorites != null)
+            {
+                var link = favorites.PlaylistSongs.FirstOrDefault(ps => ps.SongId == id);
+                if (link != null)
+                {
+                    favorites.PlaylistSongs.Remove(link);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+
+
 
 
         //[Authorize(Roles = "Admin,Artist,User")]
