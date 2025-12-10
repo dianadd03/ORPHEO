@@ -207,14 +207,12 @@ namespace Orpheo.Controllers
                     playlist.Name = requestPlaylist.Name;
                     playlist.IsPublic = requestPlaylist.IsPublic;
 
-                    // 🔥 Dacă userul NU a încărcat o poză nouă → păstrează poza veche
                     if (ImageFile == null || ImageFile.Length == 0)
                     {
                         // NU schimbăm ImagePath
                     }
                     else
                     {
-                        // 🔥 Dacă userul a încărcat POZĂ NOUĂ → upload
                         string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/playlists");
                         Directory.CreateDirectory(uploadsFolder);
 
