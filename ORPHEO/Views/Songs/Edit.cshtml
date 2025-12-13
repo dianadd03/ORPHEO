@@ -7,7 +7,7 @@
     var selectedTags = ViewBag.SelectedTags as List<int>;
 }
 
-<h2>Editează cântec</h2>
+<h2>Edit song</h2>
 
 <form asp-action="Edit" method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="Id" />
@@ -56,6 +56,6 @@
         </select>
     </div>
 
-    <button type="submit" class="btn btn-primary">Salvează</button>
-    <a asp-action="Index" class="btn btn-secondary">Renunță</a>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>

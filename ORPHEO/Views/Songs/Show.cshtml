@@ -5,19 +5,18 @@
 
 
 @{
-    ViewData["Title"] = "Detalii cântec";
+    ViewData["Title"] = "Song Details";
 }
 
 <h2>@Model.Title</h2>
 <p><strong>Artist:</strong> @Model.Artist</p>
-<p><strong>Url:</strong> <a href="@Model.Url" target="_blank">@Model.Url</a></p>
-<p><strong>Data Publicarii:</strong> @Model.DataPublicarii </p>
-<p><strong>Adăugat de:</strong> @Model.User?.UserName</p>
+<p><strong>Date:</strong> @Model.DataPublicarii </p>
+<p><strong>By:</strong> @Model.User?.Name</p>
 
 @if (Model.SongTags != null && Model.SongTags.Any())
 {
     <p>
-        <strong>Taguri:</strong>
+        <strong>Tags:</strong>
         @foreach (var st in Model.SongTags)
         {
             <span class="badge bg-secondary">@st.Tag?.Name</span>
@@ -47,7 +46,7 @@ else if (ViewBag.IsAdmin == true)
 
 <hr />
 
-<h4>Comentarii</h4>
+<h4>Comments</h4>
 
 @* LISTĂ COMENTARII *@
 @if (Model.Comms != null && Model.Comms.Any())
@@ -59,7 +58,7 @@ else if (ViewBag.IsAdmin == true)
             <p>@c.Text</p>
             <small>@c.CreatedAt.ToString("g")</small>
             <br />
-            <strong><i class="bi bi-person"></i> @c.User?.UserName</strong>
+            <strong><i class="bi bi-person"></i> @c.User?.Name</strong>
 
             @* Butoane doar dacă userul e autor sau admin *@
             @if (c.UserId == ViewBag.UserCurent)
@@ -105,30 +104,30 @@ else if (ViewBag.IsAdmin == true)
 }
 else
 {
-    <p>Nu există comentarii.</p>
+    <p>There are no comments.</p>
 }
 
 @* FORM ADAUGARE COMENTARIU *@
 @if (User.Identity.IsAuthenticated)
 {
-    <h4>Adaugă comentariu</h4>
+    <h4>Add comment</h4>
 
     <form asp-action="Show" asp-controller="Songs" method="post">
         <input type="hidden" name="SongId" value="@Model.Id" />
 
         <div class="form-group">
-            <label for="Text">Comentariu</label>
+            <label for="Text">Comment</label>
             <textarea class="form-control" name="Text"></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-2">Trimite</button>
+        <button type="submit" class="btn btn-primary mt-2">Post</button>
     </form>
 }
 else
 {
-    <p><em>Trebuie să fii logat pentru a posta comentarii.</em></p>
+        <p><em>You must be logged in to post comments.</em></p>
 }
 
 <p class="mt-3">
-    <a asp-action="Index" class="btn btn-secondary">Înapoi la listă</a>
+    <a asp-action="Index" class="btn btn-secondary">Back</a>
 </p>

@@ -142,14 +142,12 @@ namespace Orpheo.Controllers
             playlist.UserId = _userManager.GetUserId(User);
             ModelState.Remove("UserId");
 
-            // Upload imagine (există deja)
 
             if (ModelState.IsValid)
             {
                 db.Playlists.Add(playlist);
                 db.SaveChanges();
 
-                // 🔥 dacă a venit songId, îl adăugăm automat în playlist
                 if (SongId != null)
                 {
                     db.PlaylistSongs.Add(new PlaylistSong

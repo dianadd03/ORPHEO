@@ -4,11 +4,11 @@
     var tags = ViewBag.Tags as IEnumerable<Tag>;
 }
 
-<h2>Lista tagurilor</h2>
+<h2>Tags</h2>
 
 @if (User.IsInRole("Admin"))
 {
-    <a asp-action="New" class="btn btn-primary mb-3">Creează tag</a>
+    <a asp-action="New" class="btn btn-primary mb-3">Create tag</a>
 }
 
 @if (ViewBag.Message != null)
@@ -19,8 +19,8 @@
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Nume</th>
-            <th>Nr. melodii</th>
+            <th>Name</th>
+            <th>No. songs</th>
             <th></th>
         </tr>
     </thead>
