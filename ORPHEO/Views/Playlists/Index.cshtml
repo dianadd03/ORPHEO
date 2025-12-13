@@ -9,7 +9,7 @@
 
 @if (User.Identity.IsAuthenticated)
 {
-    <a asp-action="New" class="btn btn-primary mb-3">Creează playlist</a>
+    <a asp-action="New" class="btn btn-primary mb-3">Create playlist</a>
 }
 
 @if (ViewBag.Message != null)
@@ -48,7 +48,7 @@
                     </h5>
 
                     <p class="card-text">
-                        <strong>User:</strong> @p.User?.UserName <br />
+                        <strong>User:</strong> @p.User?.Name <br />
                         <strong>Songs:</strong> @p.PlaylistSongs?.Count()
                     </p>
 
@@ -65,5 +65,5 @@
 
 @if (!User.Identity.IsAuthenticated)
 {
-    <i>Trebuie sa te loghezi pentru a putea crea un playlist.</i>
+    <i>You must be logged in to create a playlist.</i>
 }
