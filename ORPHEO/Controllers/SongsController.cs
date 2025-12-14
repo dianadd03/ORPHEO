@@ -26,45 +26,100 @@ namespace Orpheo.Controllers
         // cu AllowAnnonymous dau voie tuturor tipurilor de ut, dar si celor neinregistrati
         [AllowAnonymous]
         // afisez toate cantecele
-        public IActionResult Index(string search)
+        public IActionResult Index(string search, string sort = "date", int page = 1)
         {
+            int perPage = 5;   // câte melodii afișezi pe pagină
             var songsQuery = db.Songs
                 .Include(s => s.User)
-                .Include(s => s.SongTags)
-                    .ThenInclude(st => st.Tag)
+                .Include(s => s.SongTags).ThenInclude(st => st.Tag)
+                .Include(s => s.Comms)
                 .AsQueryable();
 
-            // Dacă există o căutare -> căutăm exact după titlu
+            // search bar
+            ViewBag.Search = search;
+
             if (!string.IsNullOrWhiteSpace(search))
             {
-                songsQuery = songsQuery.Where(s => s.Title.ToLower() == search.ToLower());
+                search = search.Trim().ToLower();
+
+                // Căutare în titlu + artist
+                var idsSongs = db.Songs
+                    .Where(s =>
+                        s.Title.ToLower().Contains(search) ||
+                        s.Artist.ToLower().Contains(search))
+                    .Select(s => s.Id)
+                    .ToList();
+
+                // Căutare în tag-uri
+                var idsTags = db.SongTags
+                    .Where(st => st.Tag.Name.ToLower().Contains(search))
+                    .Select(st => st.SongId)
+                    .ToList();
+
+                // Căutare în comentarii
+                var idsComments = db.Comms
+                    .Where(c => c.Text.ToLower().Contains(search))
+                    .Select(c => c.SongId)
+                    .ToList();
+
+                var mergedIds = idsSongs
+                    .Union(idsTags)
+                    .Union(idsComments)
+                    .Distinct()
+                    .ToList();
+
+                songsQuery = songsQuery.Where(s => mergedIds.Contains(s.Id));
+            }
+ 
+            //PAGINAȚIE  
+            int totalItems = songsQuery.Count();
+            int lastPage = (int)Math.Ceiling((double)totalItems / perPage);
+
+            int offset = (page - 1) * perPage;
+
+            // SORTARE
+            switch (sort)
+            {
+                case "likes":
+                    songsQuery = songsQuery
+                        .OrderByDescending(s =>
+                            _context.SongVotes.Count(v => v.SongId == s.Id && v.IsLike == true));
+                    break;
+
+                default: // date
+                    songsQuery = songsQuery
+                        .OrderByDescending(s => s.DataPublicarii);
+                    break;
             }
 
+            // PAGINARE
             var songs = songsQuery
-                .OrderByDescending(s => s.Id)
+                .Skip(offset)
+                .Take(perPage)
                 .ToList();
 
-            // Playlist-urile userului doar dacă e logat
+
+            ViewBag.Songs = songs;
+            ViewBag.lastPage = lastPage;
+            ViewBag.Sort = sort;
+
+
+            // Construirea URL-ului pentru paginare
+            if (!string.IsNullOrEmpty(search))
+                ViewBag.PaginationBaseUrl = $"/Songs/Index?search={search}&sort={sort}&page=";
+            else
+                ViewBag.PaginationBaseUrl = $"/Songs/Index?sort={sort}&page=";
+
+            // Playlist-urile userului
             if (User.Identity.IsAuthenticated)
             {
                 string userId = _userManager.GetUserId(User);
                 ViewBag.Playlists = db.Playlists.Where(p => p.UserId == userId).ToList();
             }
 
-            ViewBag.Search = search;
-            ViewBag.Songs = songs;
-
-            if (TempData.ContainsKey("message"))
-            {
-                ViewBag.Message = TempData["message"];
-                ViewBag.AlertType = TempData["messageType"];
-            }
-
             SetAccessRights();
             return View();
         }
-
-
         public async Task<IActionResult> Like(int id)
         {
             var userId = _userManager.GetUserId(User);
@@ -365,6 +420,8 @@ namespace Orpheo.Controllers
 
             ModelState.Remove("UserId");
             ModelState.Remove("Url");
+            ModelState.Remove("NewAudioFile");
+
 
             requestSong.UserId = song.UserId;
 

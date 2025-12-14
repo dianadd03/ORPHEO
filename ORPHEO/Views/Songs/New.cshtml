@@ -6,7 +6,7 @@
     var tags = ViewBag.Tags as IEnumerable<SelectListItem>;
 }
 
-<h2>Adaugă cântec</h2>
+<h2>Add song</h2>
 
 <form asp-action="New" method="post" enctype="multipart/form-data">
     <div asp-validation-summary="All" class="text-danger"></div>
@@ -31,12 +31,12 @@
 
 
     <div class="form-group">
-        <label>Data publicarii</label>
+        <label>Date</label>
         <input asp-for="DataPublicarii" type="Date" class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Taguri</label>
+        <label class="form-label">Tags</label>
         <select name="SelectedTags" multiple class="form-control">
             @if (tags != null)
             {
@@ -46,9 +46,9 @@
                 }
             }
         </select>
-        <small class="form-text text-muted">Ține Ctrl (sau Cmd) pentru selecție multiplă.</small>
+        <small class="form-text text-muted">Ctrl/Cmd - for multiple selection</small>
     </div>
 
-    <button type="submit" class="btn btn-primary">Salvează</button>
-    <a asp-action="Index" class="btn btn-secondary">Renunță</a>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>

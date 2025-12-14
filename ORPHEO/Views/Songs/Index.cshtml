@@ -1,6 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Songs";
 }
+
 @using Orpheo.Data
 @using Microsoft.AspNetCore.Identity
 @inject ApplicationDbContext _context
@@ -8,16 +9,44 @@
 
 <h2 class="mb-4">All Songs</h2>
 
-<form method="get" asp-action="Index" class="d-flex mb-4">
+<!-- SEARCH -->
+<form method="get" asp-action="Index" class="input-group mb-3">
     <input type="text"
            name="search"
            class="form-control"
-           placeholder="Search song..."
+           placeholder="Search songs, artists, tags..."
            value="@ViewBag.Search" />
 
-    <button class="btn btn-primary ms-2">Search</button>
+    <button class="btn btn-outline-success" type="submit">
+        Search
+    </button>
 </form>
 
+@{
+    string sort = ViewBag.Sort as string ?? "date";
+}
+
+<!-- SORT -->
+<form method="get" asp-action="Index" class="mb-4">
+    <input type="hidden" name="search" value="@ViewBag.Search" />
+
+    <select name="sort"
+            class="form-select w-auto d-inline-block"
+            onchange="this.form.submit()">
+
+        @if (sort == "date")
+        {
+            <option value="date" selected>Sort by date (newest)</option>
+            <option value="likes">Sort by likes</option>
+        }
+        else
+        {
+            <option value="date">Sort by date (newest)</option>
+            <option value="likes" selected>Sort by likes</option>
+        }
+
+    </select>
+</form>
 
 @if (ViewBag.Message != null)
 {
@@ -25,6 +54,7 @@
         @ViewBag.Message
     </div>
 }
+
 @if (ViewBag.AfisareButoane == true)
 {
     <a class="btn btn-primary mb-4" href="/Songs/New">
@@ -32,145 +62,149 @@
     </a>
 }
 
-@foreach (var song in ViewBag.Songs)
-{
-    <div class="song-card p-3 mb-3 border rounded">
+<!-- SONG LIST -->
+<div class="row row-cols-1 g-4">
 
-        <h4>@song.Title – @song.Artist</h4>
+    @foreach (var song in ViewBag.Songs)
+    {
+        <div class="col">
+            <div class="card shadow-sm border-0 song-card">
+                <div class="card-body">
 
-        <div class="d-flex align-items-center gap-2 mt-2">
+                    <h5 class="fw-bold">@song.Title</h5>
+                    <h6 class="text-muted mb-3">@song.Artist</h6>
 
-            <button class="btn btn-primary" onclick="togglePlay(@song.Id)">
-                <i id="icon-@song.Id" class="fa-solid fa-play"></i> Ascultă
-            </button>
+                    <!-- PLAYER -->
+                    <div class="mb-3">
+                        <button class="btn btn-primary" onclick="togglePlay(@song.Id)">
+                            <i id="icon-@song.Id" class="fa-solid fa-play"></i>
+                            Listen
+                        </button>
 
-            <audio id="audio-@song.Id" src="@song.Url"></audio>
+                        <audio id="audio-@song.Id" src="@song.Url"></audio>
+                    </div>
 
-            
-            @* Formular pentru adăugare în playlist *@
-            @if (User.Identity.IsAuthenticated)
-            {
-                <form method="post" action="/Playlists/AddSong" class="d-flex gap-2 ms-3">
-                    <input type="hidden" name="songId" value="@song.Id" />
+                    <hr />
 
-                    <select name="playlistId" class="form-select" style="width:180px;">
-                        <option disabled selected>Select playlist...</option>
-                        @foreach (var p in ViewBag.Playlists)
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+
+                        <!-- LIKE / DISLIKE  -->
+                        @if (User.Identity.IsAuthenticated)
                         {
-                            <option value="@p.Id">@p.Name</option>
-                        }
-                    </select>
+                            string userId = _userManager.GetUserId(User);
+                            int songId = song.Id;
 
-                    <button type="submit" class="btn btn-success">
-                        ➕ Adaugă
-                    </button>
-                </form>
-            }
+                            var vote = _context.SongVotes
+                            .FirstOrDefault(v => v.SongId == songId && v.UserId == userId);
+
+                            bool? isLike = vote?.IsLike;
+
+                            <a asp-controller="Songs"
+                               asp-action="Like"
+                               asp-route-id="@song.Id"
+                               class="btn @(isLike == true ? "btn-pink" : "btn-outline-pink")">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
+                            </a>
+
+                            <a asp-controller="Songs"
+                               asp-action="Dislike"
+                               asp-route-id="@song.Id"
+                               class="btn @(isLike == false ? "btn-pink" : "btn-outline-pink")">
+                                <i class="bi bi-hand-thumbs-down-fill"></i>
+                            </a>
+                        }
+
+                        <!-- ADD TO PLAYLIST -->
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <form method="post" action="/Playlists/AddSong" class="d-flex gap-2">
+                                <input type="hidden" name="songId" value="@song.Id" />
+
+                                <select name="playlistId"
+                                        class="form-select form-select-sm"
+                                        style="width:150px;">
+                                    <option disabled selected>Playlist...</option>
+
+                                    @foreach (var p in ViewBag.Playlists)
+                                    {
+                                        <option value="@p.Id">@p.Name</option>
+                                    }
+                                </select>
+
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </form>
+                        }
 
             @*  Sistem votare *@
             @{
                 var userId = _userManager.GetUserId(User);
                 int songId = song.Id;
+                        <!-- DETAILS -->
+                        <a href="/Songs/Show/@song.Id"
+                           class="btn btn-outline-secondary btn-sm">
+                            Details
+                        </a>
 
-                var vote = _context.SongVotes
-                .FirstOrDefault(v => v.SongId == songId && v.UserId == userId);
+                    </div>
 
-                bool? isLike = vote?.IsLike;   // true = like, false = dislike, null = nevotat
-            }
-
-            <a asp-action="Like"
-               asp-route-id="@song.Id"
-               class="btn @(isLike == true ? "btn-pink" : "btn-outline-pink")">
-                ❤️
-            </a>
-
-            <a asp-action="Dislike"
-               asp-route-id="@song.Id"
-               class="btn @(isLike == false ? "btn-pink" : "btn-outline-pink")">
-                👎
-            </a>
-
-
-            @if (User.Identity.IsAuthenticated)
-            {
-                <a href="/Playlists/New?songId=@song.Id" class="btn btn-warning">
-                    ➕ Playlist nou
-                </a>
-            }
-
+                </div>
+            </div>
         </div>
+    }
 
-    </div>
-}
-
-
-
-<div class="modal fade" id="addToPlaylistModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-
-            <form asp-controller="Playlists" asp-action="AddSongToPlaylist" method="post">
-                <input type="hidden" id="modalSongId" name="SongId" />
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Add song to playlist</h5>
-                </div>
-
-                <div class="modal-body">
-
-                    @if (((List<Playlist>)ViewBag.Playlists)?.Any() == true)
-                    {
-
-                        <label>Playlist name:</label>
-                        <input class="form-control" name="NewPlaylistName" placeholder="Enter playlist name..." required />
-
-                    }
-                    else
-                    {
-                        <p>You don't have any playlists yet.</p>
-                        <label>Create new playlist:</label>
-                        <input class="form-control" name="NewPlaylistName" />
-                    }
-
-                </div>
-
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Save</button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
 </div>
 
+<!-- PAGINATION -->
+<div class="mt-4">
+    <nav>
+        <ul class="pagination">
 
+            <li class="page-item">
+                <a class="page-link" href="@($"{ViewBag.PaginationBaseUrl}1")">&laquo;</a>
+            </li>
+
+            @for (int i = 1; i <= ViewBag.lastPage; i++)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="@($"{ViewBag.PaginationBaseUrl}{i}")">
+                        @i
+                    </a>
+                </li>
+            }
+
+            <li class="page-item">
+                <a class="page-link" href="@($"{ViewBag.PaginationBaseUrl}{ViewBag.lastPage}")">&raquo;</a>
+            </li>
+
+        </ul>
+    </nav>
+</div>
+
+<!-- AUDIO SCRIPT -->
 <script>
     function togglePlay(id) {
-        var audio = document.getElementById("audio-" + id);
-        var icon = document.getElementById("icon-" + id);
+        const audio = document.getElementById("audio-" + id);
+        const icon = document.getElementById("icon-" + id);
+
+        document.querySelectorAll("audio").forEach(a => {
+            if (a !== audio) {
+                a.pause();
+                a.currentTime = 0;
+                const ic = document.getElementById("icon-" + a.id.replace("audio-", ""));
+                if (ic) {
+                    ic.classList.remove("fa-pause");
+                    ic.classList.add("fa-play");
+                }
+            }
+        });
 
         if (audio.paused) {
-
-            // Oprește orice altă melodie
-            document.querySelectorAll("audio").forEach(a => {
-                if (a !== audio) {
-                    a.pause();
-                    a.currentTime = 0;
-
-                    let otherIcon = document.getElementById("icon-" + a.id.replace("audio-", ""));
-                    if (otherIcon) {
-                        otherIcon.classList.remove("fa-pause");
-                        otherIcon.classList.add("fa-play");
-                    }
-                }
-            });
-
             audio.play();
             icon.classList.remove("fa-play");
             icon.classList.add("fa-pause");
-        }
-        else {
+        } else {
             audio.pause();
             icon.classList.remove("fa-pause");
             icon.classList.add("fa-play");
@@ -178,32 +212,14 @@
     }
 </script>
 
-
-<script>
-    const modal = document.getElementById("addToPlaylistModal");
-
-    modal.addEventListener("show.bs.modal", function (event) {
-
-        let btn = event.relatedTarget;
-        let songId = btn.getAttribute("data-song-id");
-        document.getElementById("modalSongId").value = songId;
-
-        let select = modal.querySelector("select[name='PlaylistId']");
-        if (select) {
-            select.selectedIndex = 0; // selectează "Choose playlist..."
-        }
-    });
-</script>
-
-
-
 <style>
-    .song-card:hover {
-        background: #f1f1f1;
+    .song-card {
+        border-radius: 12px;
         transition: 0.2s;
     }
 
-    .play-btn i {
-        font-size: 20px;
-    }
+        .song-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
 </style>
