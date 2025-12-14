@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Orpheo.Models;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Orpheo.Models
