@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Orpheo.Models;
+using System.Reflection.Emit;
 
 namespace Orpheo.Data
 {
@@ -12,21 +13,24 @@ namespace Orpheo.Data
         }
 
         public DbSet<Song> Songs { get; set; }
+
         public DbSet<Tag> Tags { get; set; }
+
         public DbSet<SongTag> SongTags { get; set; }
 
         public DbSet<Playlist> Playlists { get; set; }
+
         public DbSet<PlaylistSong> PlaylistSongs { get; set; }
 
         public DbSet<Comm> Comms { get; set; }
 
         public DbSet<SessionRoom> SessionRooms { get; set; }
+
         public DbSet<SessionRoomUser> SessionRoomUsers { get; set; }
 
         public DbSet<RoleRequest> RoleRequests { get; set; }
 
         public DbSet<SongVote> SongVotes { get; set; }
-
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -119,6 +123,7 @@ namespace Orpheo.Data
                 .WithMany() 
                 .HasForeignKey(sr => sr.HostUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

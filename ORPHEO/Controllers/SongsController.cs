@@ -21,7 +21,7 @@ namespace Orpheo.Controllers
 
         // daca scriu cu Authorize, atunci vor avea permisiuni doar tipurile de utilizatori 
         // pe care ii specific, se neglijeaza cel neinregistrat
-        //[Authorize(Roles = "Admin,Artist,User")]
+        //[Authorize(Roles = "Admin,Artist ,User")]
 
         // cu AllowAnnonymous dau voie tuturor tipurilor de ut, dar si celor neinregistrati
         [AllowAnonymous]
