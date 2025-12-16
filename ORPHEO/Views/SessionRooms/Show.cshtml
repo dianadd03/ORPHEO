@@ -1,4 +1,6 @@
 ﻿@model Orpheo.Models.SessionRoom 
+@using System.Security.Claims
+
 
 <h2>@Model.Name - @Model.HostUser</h2>
 <h4>@Model.Playlist.Name</h4>
@@ -35,6 +37,47 @@
     <audio id="audioPlayer"></audio>
 </div>
 
+@if (Model.HostUserId == User.FindFirstValue(ClaimTypes.NameIdentifier))
+{
+    <form asp-action="AddParticipant" method="post" class="d-flex gap-2 mt-3">
+        <input type="hidden" name="roomId" value="@Model.Id" />
+
+        <input type="text"
+               name="userCode"
+               class="form-control"
+               placeholder="Enter user code"
+               maxlength="8"
+               required />
+
+        <button type="submit" class="btn btn-success">
+            Add user
+        </button>
+    </form>
+}
+
+<div class="dropdown mt-3">
+    <button class="btn btn-outline-secondary dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+        👥 Participants (@Model.SessionRoomUsers.Count)
+    </button>
+
+    <ul class="dropdown-menu">
+        @foreach (var sru in Model.SessionRoomUsers)
+        {
+            <li class="dropdown-item d-flex justify-content-between align-items-center">
+                <span>@sru.User.UserName</span>
+
+                @if (sru.UserId == Model.HostUserId)
+                {
+                    <span class="badge bg-primary">Host</span>
+                }
+            </li>
+        }
+    </ul>
+</div>
+<br></br>
 
 <!-- LISTA DE MELODII -->
 <h4>Songs in this playlist:</h4>

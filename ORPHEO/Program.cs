@@ -33,7 +33,38 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseAuthentication();  
+app.UseAuthentication();
+
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true)
+    {
+        using var scope = context.RequestServices.CreateScope();
+        var userManager = scope.ServiceProvider
+            .GetRequiredService<UserManager<ApplicationUser>>();
+
+        var user = await userManager.GetUserAsync(context.User);
+
+        if (user != null && user.UserCode == null)
+        {
+            string code;
+            do
+            {
+                code = Guid.NewGuid()
+                    .ToString("N")
+                    .Substring(0, 8)
+                    .ToUpper();
+            }
+            while (await userManager.Users.AnyAsync(u => u.UserCode == code));
+
+            user.UserCode = code;
+            await userManager.UpdateAsync(user);
+        }
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 
 app.MapRazorPages();
