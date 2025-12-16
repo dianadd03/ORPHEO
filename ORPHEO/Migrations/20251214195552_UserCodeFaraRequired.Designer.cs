@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orpheo.Data;
 
@@ -11,9 +12,11 @@ using Orpheo.Data;
 namespace Orpheo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251214195552_UserCodeFaraRequired")]
+    partial class UserCodeFaraRequired
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -217,7 +220,6 @@ namespace Orpheo.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("UserCode")
-                        .IsRequired()
                         .HasMaxLength(8)
                         .HasColumnType("nvarchar(8)");
 
@@ -236,7 +238,8 @@ namespace Orpheo.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.HasIndex("UserCode")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[UserCode] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });

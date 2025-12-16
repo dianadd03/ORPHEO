@@ -36,6 +36,10 @@ namespace Orpheo.Data
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<ApplicationUser>()
+               .HasIndex(u => u.UserCode)
+               .IsUnique();
+
             // M–M Song–Tag
             builder.Entity<SongTag>()
                 .HasKey(st => new { st.SongId, st.TagId });

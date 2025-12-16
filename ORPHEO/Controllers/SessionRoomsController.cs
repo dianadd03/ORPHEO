@@ -93,6 +93,58 @@ namespace Orpheo.Controllers
             return View(sessionRoom);
         }
 
+        [Authorize(Roles = "User,Artist,Admin")]
+        [HttpPost]
+        public IActionResult AddParticipant(int roomId, string userCode)
+        {
+            var room = db.SessionRooms
+                .Include(r => r.SessionRoomUsers)
+                .FirstOrDefault(r => r.Id == roomId);
+
+            if (room == null)
+                return NotFound();
+
+            // 🔐 doar host-ul poate adăuga
+            var currentUserId = _userManager.GetUserId(User);
+            if (room.HostUserId != currentUserId)
+                return Forbid();
+
+            // 🔎 caut userul după UserCode
+            var user = db.Users.FirstOrDefault(u => u.UserCode == userCode);
+            if (user == null)
+            {
+                TempData["message"] = "User with this code does not exist.";
+                TempData["messageType"] = "alert-danger";
+                return RedirectToAction("Show", new { id = roomId });
+            }
+
+            // ❌ deja în room?
+            bool alreadyInRoom = room.SessionRoomUsers
+                .Any(sru => sru.UserId == user.Id);
+
+            if (alreadyInRoom)
+            {
+                TempData["message"] = "User is already in this session room.";
+                TempData["messageType"] = "alert-warning";
+                return RedirectToAction("Show", new { id = roomId });
+            }
+
+            // ✅ adăugare
+            db.SessionRoomUsers.Add(new SessionRoomUser
+            {
+                SessionRoomId = roomId,
+                UserId = user.Id
+            });
+
+            db.SaveChanges();
+
+            TempData["message"] = "User added to session room.";
+            TempData["messageType"] = "alert-success";
+
+            return RedirectToAction("Show", new { id = roomId });
+        }
+
+
         [NonAction]
         public IEnumerable<SelectListItem> GetAllPlaylists()
         {

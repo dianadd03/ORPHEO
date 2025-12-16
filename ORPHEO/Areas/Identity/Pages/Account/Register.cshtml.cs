@@ -110,6 +110,14 @@ namespace Orpheo.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
+        private string GenerateUserCode()
+        {
+            return Guid.NewGuid()
+                .ToString("N")
+                .Substring(0, 8)
+                .ToUpper();
+        }
+
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -118,6 +126,7 @@ namespace Orpheo.Areas.Identity.Pages.Account
             {
                 var user = CreateUser();
                 user.Name = Input.Name;
+                user.UserCode = GenerateUserCode();
 
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
