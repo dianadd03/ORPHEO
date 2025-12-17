@@ -9,6 +9,7 @@
         public ApplicationUser User { get; set; }
 
         public string RequestedRole { get; set; } = "Artist";
+        public string Status { get; set; } = "Pending";
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 

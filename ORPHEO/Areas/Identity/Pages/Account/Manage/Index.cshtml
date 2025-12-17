@@ -1,0 +1,158 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Profile";
+    ViewData["ActivePage"] = ManageNavPages.Index;
+}
+
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+
+<!-- rol-->
+<div class="mb-4">
+    <h5>Account role</h5>
+
+    @if (Model.IsArtist)
+    {
+        <span class="badge bg-success">Artist</span>
+    }
+    @if(Model.IsAdmin)
+    {
+        <span class="badge bg-danger">Admin</span>
+    }
+    else
+    {
+        <span class="badge bg-secondary">User</span>
+    }
+
+</div>
+<!-- cerere-->
+
+<div class="mb-4">
+
+
+    @if (Model.RoleRequest == null && Model.CanReapply && !Model.IsAdmin && !Model.IsArtist)
+    {
+        <h5>Artist role request</h5>
+        <a asp-controller="RoleRequests" 
+           asp-action="RequestArtistRole"
+           class="btn btn-outline-primary">
+            Request Artist role
+        </a>
+    }
+    else if (Model.RoleRequest?.Status == "Pending")
+    {
+        <div class="alert alert-warning">
+            Your request is under review.
+        </div>
+    }
+    else if (Model.RoleRequest?.Status == "Approved")
+    {
+        <div class="alert alert-success">
+            Your request was approved. You are now an Artist 
+        </div>
+    }
+    else if (Model.RoleRequest?.Status == "Rejected")
+    {
+        <div class="alert alert-danger">
+            Your request was rejected.
+
+            @if (!Model.CanReapply)
+            {
+                <div class="mt-2 text-muted">
+                    You can apply again after
+                    <strong>@Model.RoleRequest.CreatedAt.AddYears(1).ToShortDateString()</strong>
+                </div>
+            }
+        </div>
+    }
+
+
+</div>
+
+
+<div class="row">
+    <div class="col-md-6">
+
+        <form id="profile-form"
+              method="post"
+              enctype="multipart/form-data">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger"
+                 role="alert"></div>
+
+            <!-- Username -->
+            <div class="form-floating mb-3">
+                <input asp-for="Username"
+                       class="form-control"
+                       disabled />
+                <label asp-for="Username"></label>
+            </div>
+
+            <!-- UserCode -->
+            <div class="form-floating mb-3">
+                <input class="form-control"
+                       value="@Model.Input.UserCode"
+                       readonly />
+                <label>User code</label>
+            </div>
+
+            <!-- Name -->
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Name" class="form-control" />
+                <label asp-for="Input.Name"></label>
+            </div>
+
+            <!-- Email -->
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Email" class="form-control" />
+                <label asp-for="Input.Email"></label>
+            </div>
+
+            <!-- About -->
+            <div class="form-floating mb-3">
+                <textarea asp-for="Input.About"
+                          class="form-control"
+                          style="height:100px"></textarea>
+                <label asp-for="Input.About"></label>
+            </div>
+
+            <!-- Profile photo upload -->
+            <div class="mb-3">
+                <label asp-for="Input.ProfilePhoto"
+                       class="form-label"></label>
+                <input asp-for="Input.ProfilePhoto"
+                       type="file"
+                       class="form-control"
+                       accept="image/*" />
+            </div>
+
+            <!-- Preview poză -->
+            @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+            {
+                <div class="mb-3 text-center">
+                    <img src="@Model.ProfileImagePath"
+                         class="rounded-circle"
+                         style="width:150px;height:150px;object-fit:cover;" />
+                    <div class="text-muted mt-1">
+                        Current profile photo
+                    </div>
+                </div>
+            }
+
+
+            <button type="submit"
+                    class="w-100 btn btn-lg btn-primary">
+                Save
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

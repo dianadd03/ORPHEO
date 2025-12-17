@@ -72,7 +72,15 @@
                 <div class="card-body">
 
                     <h5 class="fw-bold">@song.Title</h5>
-                    <h6 class="text-muted mb-3">@song.Artist</h6>
+                    <div class="user-inline mb-2">
+                        <img src="@(song.User?.ProfileImage ?? "/uploads/profile-images/default.png")"
+                             class="user-avatar"
+                             alt="user avatar" />
+
+                        <small>
+                            @song.User?.Name
+                        </small>
+                    </div>
 
                     <!-- PLAYER -->
                     <div class="mb-3">
@@ -82,6 +90,14 @@
                         </button>
 
                         <audio id="audio-@song.Id" src="@song.Url"></audio>
+
+                        <input type="range"
+                               id="progress-@song.Id"
+                               class="form-range mt-2"
+                               min="0"
+                               max="100"
+                               value="0" />
+
                     </div>
 
                     <hr />
@@ -179,33 +195,58 @@
 
 <!-- AUDIO SCRIPT -->
 <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        document.querySelectorAll("audio[id^='audio-']").forEach(audio => {
+            const id = audio.id.replace("audio-", "");
+            const progress = document.getElementById("progress-" + id);
+
+            // când se încarcă durata
+            audio.addEventListener("loadedmetadata", () => {
+                progress.value = 0;
+            });
+
+            // când melodia rulează
+            audio.addEventListener("timeupdate", () => {
+                if (!audio.duration) return;
+                progress.value = (audio.currentTime / audio.duration) * 100;
+            });
+
+            // seek
+            progress.addEventListener("input", () => {
+                if (!audio.duration) return;
+                audio.currentTime = (progress.value / 100) * audio.duration;
+            });
+        });
+    });
+
     function togglePlay(id) {
         const audio = document.getElementById("audio-" + id);
         const icon = document.getElementById("icon-" + id);
 
-        document.querySelectorAll("audio").forEach(a => {
+        document.querySelectorAll("audio[id^='audio-']").forEach(a => {
             if (a !== audio) {
                 a.pause();
                 a.currentTime = 0;
-                const ic = document.getElementById("icon-" + a.id.replace("audio-", ""));
-                if (ic) {
-                    ic.classList.remove("fa-pause");
-                    ic.classList.add("fa-play");
-                }
+
+                const otherId = a.id.replace("audio-", "");
+                document.getElementById("progress-" + otherId).value = 0;
+                document.getElementById("icon-" + otherId)
+                    .classList.replace("fa-pause", "fa-play");
             }
         });
 
         if (audio.paused) {
             audio.play();
-            icon.classList.remove("fa-play");
-            icon.classList.add("fa-pause");
+            icon.classList.replace("fa-play", "fa-pause");
         } else {
             audio.pause();
-            icon.classList.remove("fa-pause");
-            icon.classList.add("fa-play");
+            icon.classList.replace("fa-pause", "fa-play");
         }
     }
 </script>
+
+
 
 <style>
     .song-card {

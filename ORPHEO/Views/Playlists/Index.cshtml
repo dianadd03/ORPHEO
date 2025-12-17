@@ -48,7 +48,15 @@
                     </h5>
 
                     <p class="card-text">
-                        <strong>User:</strong> @p.User?.Name <br />
+                        <div class="user-inline mb-2">
+                            <img src="@(p.User?.ProfileImage ?? "/uploads/profile-images/default.png")"
+                                 class="user-avatar"
+                                 alt="user avatar" />
+
+                            <small>
+                                @p.User?.Name
+                            </small>
+                        </div>
                         <strong>Songs:</strong> @p.PlaylistSongs?.Count()
                     </p>
 

@@ -24,16 +24,22 @@ namespace ORPHEO.Controllers
         {
             var userId = _userManager.GetUserId(User);
 
-            var existingRequest = db.RoleRequests.FirstOrDefault(r => r.UserId == userId);
+            var existingRequest = db.RoleRequests
+                .FirstOrDefault(r => r.UserId == userId);
 
             if (existingRequest != null)
             {
-                TempData["message"] = "You already have a pending request!";
-                TempData["msgType"] = "warning";
+                TempData["message"] = $"Your request status: {existingRequest.Status}";
+                TempData["msgType"] = "info";
                 return RedirectToAction("Index", "Home");
             }
 
-            db.RoleRequests.Add(new RoleRequest { UserId = userId });
+            db.RoleRequests.Add(new RoleRequest
+            {
+                UserId = userId,
+                Status = "Pending"
+            });
+
             db.SaveChanges();
 
             TempData["message"] = "Your request has been sent!";
@@ -45,33 +51,38 @@ namespace ORPHEO.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult PendingRequests()
         {
-            var requests = db.RoleRequests.Include(r => r.User).ToList();
+            var requests = db.RoleRequests
+                .Include(r => r.User)
+                .Where(r => r.Status == "Pending")
+                .ToList();
+
             return View(requests);
         }
+
 
         // ADMIN approve
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Approve(int id)
         {
-            var request = db.RoleRequests.Include(r => r.User).FirstOrDefault(r => r.Id == id);
+            var request = db.RoleRequests
+                .Include(r => r.User)
+                .FirstOrDefault(r => r.Id == id);
+
             if (request == null) return NotFound();
 
-            // 1. scoatem rolul User
             if (await _userManager.IsInRoleAsync(request.User, "User"))
             {
                 await _userManager.RemoveFromRoleAsync(request.User, "User");
             }
 
-            // 2. adăugăm rolul Artist
             await _userManager.AddToRoleAsync(request.User, "Artist");
 
-            db.RoleRequests.Remove(request);
+            request.Status = "Approved";
             db.SaveChanges();
 
-            TempData["message"] = "Felicitari! Sunteti artist!";
-            TempData["msgType"] = "success";
             return RedirectToAction("PendingRequests");
         }
+
 
         // ADMIN reject
         [Authorize(Roles = "Admin")]
@@ -80,11 +91,9 @@ namespace ORPHEO.Controllers
             var request = db.RoleRequests.FirstOrDefault(r => r.Id == id);
             if (request == null) return NotFound();
 
-            db.RoleRequests.Remove(request);
+            request.Status = "Rejected";
             db.SaveChanges();
 
-            TempData["message"] = "Ne pare rau! Nu sunteti un artist!";
-            TempData["msgType"] = "danger";
             return RedirectToAction("PendingRequests");
         }
 
