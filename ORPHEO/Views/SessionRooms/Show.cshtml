@@ -95,6 +95,43 @@
         </li>
     }
 </ul>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+    const roomId = @Model.Id;
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/sessionRoomHub")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.start().then(() => {
+        connection.invoke("JoinRoom", roomId);
+        console.log("SignalR connected");
+    });
+
+    connection.on("PlaySong", (songIndex, time) => {
+        if (songIndex !== index || player.paused) {
+            loadSong(songIndex, false);
+        }
+        player.currentTime = time;
+        if (player.paused) {
+            player.play();
+            playIcon.classList.replace("bi-play-fill", "bi-pause-fill");
+        }
+    });
+
+
+    connection.on("PauseSong", (time) => {
+        player.currentTime = time;
+        player.pause();
+        playIcon.classList.replace("bi-pause-fill", "bi-play-fill");
+    });
+
+    connection.on("SeekSong", (time) => {
+        player.currentTime = time;
+    });
+
+</script>
 
 <script>
     const player = document.getElementById("audioPlayer");
@@ -113,23 +150,51 @@
 
     let index = 0;
 
-    function loadSong(i) {
+    function loadSong(i, broadcast = true) {
         index = i;
         player.src = songs[i].url;
         currentSongLabel.innerText = songs[i].title;
-        player.play();
-        playIcon.classList.replace("bi-play-fill", "bi-pause-fill");
+
+        if (broadcast) {
+            player.play();
+            playIcon.classList.replace("bi-play-fill", "bi-pause-fill");
+            connection.invoke("PlaySong", roomId, index, player.currentTime);
+        }
     }
 
+
+
     playPauseBtn.onclick = () => {
+
+        if (!player.src || player.src === "") {
+            loadSong(0); // prima melodie din playlist
+            return;
+        }
+
         if (player.paused) {
             player.play();
             playIcon.classList.replace("bi-play-fill", "bi-pause-fill");
+
+            connection.invoke(
+                "PlaySong",
+                roomId,
+                index,
+                player.currentTime
+            );
         } else {
             player.pause();
             playIcon.classList.replace("bi-pause-fill", "bi-play-fill");
+
+            connection.invoke(
+                "PauseSong",
+                roomId,
+                player.currentTime
+            );
         }
     };
+
+
+
 
     nextBtn.onclick = () => {
         index = (index + 1) % songs.length;
@@ -140,6 +205,7 @@
         index = (index - 1 + songs.length) % songs.length;
         loadSong(index);
     };
+
 
     player.onended = () => {
         index = (index + 1) % songs.length;
@@ -152,9 +218,17 @@
         }
     };
 
-    progressBar.oninput = () => {
-        player.currentTime = (progressBar.value / 100) * player.duration;
+        progressBar.oninput = () => {
+        const newTime = (progressBar.value / 100) * player.duration;
+        player.currentTime = newTime;
+
+        connection.invoke(
+            "SeekSong",
+            roomId,
+            newTime
+        );
     };
+
 
     document.querySelectorAll(".playThisBtn").forEach((btn, i) => {
         btn.onclick = () => {
@@ -162,7 +236,5 @@
         };
     });
 
-    // incepem cu primul
-    loadSong(0);
 </script>
 
