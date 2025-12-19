@@ -11,8 +11,6 @@ namespace Orpheo.Models
         [Required]
         public string? Title { get; set; }
 
-        public string? Artist { get; set; }
-
         [Required]
         public string? Url { get; set; }
 

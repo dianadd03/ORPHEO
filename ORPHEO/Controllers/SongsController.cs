@@ -44,11 +44,14 @@ namespace Orpheo.Controllers
 
                 // caut in titlu + artist
                 var idsSongs = db.Songs
-                    .Where(s =>
-                        s.Title.ToLower().Contains(search) ||
-                        s.Artist.ToLower().Contains(search))
-                    .Select(s => s.Id)
-                    .ToList();
+                .Include(s => s.User)
+                .Where(s =>
+                    s.Title.ToLower().Contains(search) ||
+                    (s.User != null && s.User.Name.ToLower().Contains(search)))
+                .Select(s => s.Id)
+                .ToList();
+
+
 
                 // caut in taguri
                 var idsTags = db.SongTags
@@ -296,12 +299,10 @@ namespace Orpheo.Controllers
         [Authorize(Roles = "Admin,Artist")]
         [HttpPost]
         public async Task<IActionResult> New(Song song, int[] SelectedTags, IFormFile AudioFile)
-
         {
             song.UserId = _userManager.GetUserId(User);
             ModelState.Remove("UserId");
             ModelState.Remove("Url");
-
 
             song.DataPublicarii = DateTime.Now;
 
@@ -330,14 +331,11 @@ namespace Orpheo.Controllers
                 }
             }
 
+            // VALIDARE AUDIO
             if (AudioFile == null || AudioFile.Length == 0)
-            {
-                ModelState.AddModelError("AudioFile", "Trebuie să încărcați un fișier MP3.");
-            }
+                ModelState.AddModelError("AudioFile", "You must upload an MP3 file.");
             else if (!AudioFile.FileName.EndsWith(".mp3"))
-            {
-                ModelState.AddModelError("AudioFile", "Fișierul trebuie să fie MP3.");
-            }
+                ModelState.AddModelError("AudioFile", "File must be MP3.");
 
             if (ModelState.IsValid)
             {
@@ -347,28 +345,21 @@ namespace Orpheo.Controllers
                 var fileName = Guid.NewGuid() + Path.GetExtension(AudioFile.FileName);
                 var filePath = Path.Combine(uploadPath, fileName);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await AudioFile.CopyToAsync(stream);
-                }
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await AudioFile.CopyToAsync(stream);
 
                 song.Url = "/uploads/songs/" + fileName;
 
-                // TAG-URI
-                if (SelectedTags != null && SelectedTags.Length > 0)
+                // TAGS
+                if (SelectedTags != null)
                 {
-                    song.SongTags = new List<SongTag>();
-                    foreach (var tagId in SelectedTags)
-                    {
-                        song.SongTags.Add(new SongTag { TagId = tagId });
-                    }
+                    song.SongTags = SelectedTags
+                        .Select(t => new SongTag { TagId = t })
+                        .ToList();
                 }
 
                 db.Songs.Add(song);
                 db.SaveChanges();
-
-                TempData["message"] = "Song has been added";
-                TempData["messageType"] = "alert-success";
 
                 return RedirectToAction("Index");
             }
@@ -376,6 +367,7 @@ namespace Orpheo.Controllers
             ViewBag.Tags = GetAllTags();
             return View(song);
         }
+
 
         [Authorize(Roles = "Admin,Artist")]
         [HttpGet]
@@ -421,7 +413,6 @@ namespace Orpheo.Controllers
             ModelState.Remove("NewAudioFile");
 
 
-            requestSong.UserId = song.UserId;
 
             // Permisiuni
             if (!(song.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin")))
@@ -431,17 +422,7 @@ namespace Orpheo.Controllers
                 return RedirectToAction("Index");
             }
 
-            // VALIDARE ARTIST
-            var artistUser = db.Users.FirstOrDefault(u => u.Name == requestSong.Artist);
-            if (artistUser == null)
-                ModelState.AddModelError("Artist", "Artistul introdus nu există în baza de date.");
-            else
-            {
-                var artistRoleId = db.Roles.Where(r => r.Name == "Artist").Select(r => r.Id).FirstOrDefault();
-                bool userIsArtist = db.UserRoles.Any(ur => ur.UserId == artistUser.Id && ur.RoleId == artistRoleId);
-                if (!userIsArtist)
-                    ModelState.AddModelError("Artist", "Utilizatorul există, dar nu are rolul de Artist.");
-            }
+           
 
             if (ModelState.IsValid)
             {
@@ -478,7 +459,6 @@ namespace Orpheo.Controllers
                 }
 
                 song.Title = requestSong.Title;
-                song.Artist = requestSong.Artist;
 
                 song.SongTags.Clear();
                 if (SelectedTags != null && SelectedTags.Length > 0)

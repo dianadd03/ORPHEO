@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    ViewData["Title"] = "Adaugă cântec";
+    ViewData["Title"] = "Add song";
     var tags = ViewBag.Tags as IEnumerable<SelectListItem>;
 }
 
@@ -11,33 +11,24 @@
 <form asp-action="New" method="post" enctype="multipart/form-data">
     <div asp-validation-summary="All" class="text-danger"></div>
 
+    <!-- TITLE -->
     <div class="mb-3">
         <label asp-for="Title" class="form-label"></label>
         <input asp-for="Title" class="form-control" />
         <span asp-validation-for="Title" class="text-danger"></span>
     </div>
 
+    <!-- AUDIO FILE -->
     <div class="mb-3">
-        <label asp-for="Artist" class="form-label"></label>
-        <input asp-for="Artist" class="form-control" />
-        <span asp-validation-for="Artist" class="text-danger"></span>
-    </div> 
-
-    <div class="form-group">
-        <label>Upload MP3</label>
+        <label class="form-label">Upload MP3</label>
         <input type="file" name="AudioFile" accept=".mp3" class="form-control" />
         <span asp-validation-for="Url" class="text-danger"></span>
     </div>
 
-
-    <div class="form-group">
-        <label>Date</label>
-        <input asp-for="DataPublicarii" type="Date" class="form-control" />
-    </div>
-
+    <!-- TAGS -->
     <div class="mb-3">
         <label class="form-label">Tags</label>
-        <select name="SelectedTags" multiple class="form-control">
+        <select name="SelectedTags" multiple class="form-select">
             @if (tags != null)
             {
                 foreach (var tag in tags)
@@ -46,9 +37,10 @@
                 }
             }
         </select>
-        <small class="form-text text-muted">Ctrl/Cmd - for multiple selection</small>
+        <small class="text-muted">Ctrl / Cmd for multiple selection</small>
     </div>
 
+    <!-- BUTTONS -->
     <button type="submit" class="btn btn-primary">Save</button>
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>

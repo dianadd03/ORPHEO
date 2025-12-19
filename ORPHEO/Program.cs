@@ -14,6 +14,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -65,12 +66,16 @@ app.Use(async (context, next) =>
     await next();
 });
 
+
 app.UseAuthorization();
+
+app.MapHub<Orpheo.Hubs.SessionRoomHub>("/sessionRoomHub");
 
 app.MapRazorPages();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 
 app.Run();

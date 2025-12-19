@@ -16,7 +16,15 @@
 </h2>
 
 
-<p><strong>Creator:</strong> @Model.User.Name</p>
+<div class="user-inline mb-2">
+    <img src="@(Model.User?.ProfileImage ?? "/uploads/profile-images/default.png")"
+         class="user-avatar"
+         alt="user avatar" />
+
+    <small>
+        @Model.User?.Name
+    </small>
+</div>
 
 @if (ViewBag.AfisareButoane == true)
 {
@@ -75,8 +83,16 @@
 
             <div>
                 <h5 class="mb-1">@song.Title</h5>
-                <small class="text-muted">@song.Artist</small>
+
+                <p class="user-inline">
+                    <img src="@(song.User?.ProfileImage ?? "/uploads/profile-images/default.png")"
+                         class="user-avatar"
+                         alt="artist avatar" />
+
+                    <strong>@song.User?.Name</strong>
+                </p>
             </div>
+
 
             <div class="d-flex align-items-center gap-2">
 
