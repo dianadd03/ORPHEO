@@ -70,7 +70,7 @@ else if (ViewBag.IsAdmin == true)
 
 <h4>Comments</h4>
 
-@* LISTĂ COMENTARII *@
+@* lista comms *@
 @if (Model.Comms != null && Model.Comms.Any())
 {
     @foreach (var c in Model.Comms.OrderByDescending(c => c.CreatedAt))
@@ -89,7 +89,7 @@ else if (ViewBag.IsAdmin == true)
             </div>
 
 
-            @* Butoane doar dacă userul e autor sau admin *@
+            @* butoane doar daca userul e artist sau admin *@
             @if (c.UserId == ViewBag.UserCurent)
             {
                 <div class="d-flex mt-2">
@@ -136,7 +136,7 @@ else
     <p>There are no comments.</p>
 }
 
-@* FORM ADAUGARE COMENTARIU *@
+@* form adaugare comentariu *@
 @if (User.Identity.IsAuthenticated)
 {
     <h4>Add comment</h4>

@@ -1,41 +1,68 @@
 ﻿@model Orpheo.Models.SessionRoom 
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
 
 
 <h2>@Model.Name - @Model.HostUser</h2>
 <h4>@Model.Playlist.Name</h4>
 
+@if (TempData["message"] != null)
+{
+    <div class="alert @TempData["messageType"] mt-3">
+        @TempData["message"]
+    </div>
+}
 
 
-<!-- AUDIO PLAYER SECTION -->
+<!-- audio player -->
 <div class="card p-3 mb-4">
     <div class="d-flex align-items-center gap-3">
 
-        <!-- PLAY/PAUSE -->
+        <!-- play/pause -->
         <button class="btn btn-primary" id="playPauseBtn">
             <i class="bi bi-play-fill" id="playIcon" style="font-size: 28px;"></i>
         </button>
 
-        <!-- PREVIOUS -->
+        <!-- inapoi -->
         <button class="btn btn-outline-secondary" id="prevBtn">
             <i class="bi bi-skip-start-fill" style="font-size: 24px;"></i>
         </button>
 
-        <!-- NEXT -->
+        <!-- urm -->
         <button class="btn btn-outline-secondary" id="nextBtn">
             <i class="bi bi-skip-end-fill" style="font-size: 24px;"></i>
         </button>
 
-        <!-- Song title -->
         <span id="currentSong" class="ms-3 fw-bold"></span>
     </div>
 
-    <!-- Progress bar -->
+    <!-- linia de redare -->
     <input type="range" id="progressBar" min="0" max="100" value="0"
            class="form-range mt-3" />
 
     <audio id="audioPlayer"></audio>
 </div>
+
+@if (User.IsInRole("Admin") ||
+    Model.HostUserId == User.FindFirstValue(ClaimTypes.NameIdentifier))
+{
+    <a asp-action="Edit"
+       asp-route-id="@Model.Id"
+       class="btn btn-warning">
+        Edit session room
+    </a>
+}
+
+@if (User.IsInRole("Admin") ||
+    Model.HostUserId == UserManager.GetUserId(User))
+{
+    <a asp-action="Delete"
+       asp-route-id="@Model.Id"
+       class="btn btn-danger">
+        Delete session room
+    </a>
+}
 
 @if (Model.HostUserId == User.FindFirstValue(ClaimTypes.NameIdentifier))
 {
@@ -79,7 +106,21 @@
 </div>
 <br></br>
 
-<!-- LISTA DE MELODII -->
+@if (!User.IsInRole("Admin") &&
+    Model.HostUserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+{
+    <form asp-action="Leave"
+          asp-route-id="@Model.Id"
+          method="post"
+          onsubmit="return confirm('Are you sure you want to leave this session room?');">
+        <button class="btn btn-danger">
+            Leave session room
+        </button>
+    </form>
+}
+
+
+<!-- melodii -->
 <h4>Songs in this playlist:</h4>
 <ul class="list-group">
     @foreach (var ps in Model.Playlist.PlaylistSongs)

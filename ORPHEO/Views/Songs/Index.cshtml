@@ -9,7 +9,7 @@
 
 <h2 class="mb-4">All Songs</h2>
 
-<!-- SEARCH -->
+<!-- search -->
 <form method="get" asp-action="Index" class="input-group mb-3">
     <input type="text"
            name="search"
@@ -26,7 +26,7 @@
     string sort = ViewBag.Sort as string ?? "date";
 }
 
-<!-- SORT -->
+<!-- sort -->
 <form method="get" asp-action="Index" class="mb-4">
     <input type="hidden" name="search" value="@ViewBag.Search" />
 
@@ -62,7 +62,7 @@
     </a>
 }
 
-<!-- SONG LIST -->
+<!-- lista cantece -->
 <div class="row row-cols-1 g-4">
 
     @foreach (var song in ViewBag.Songs)
@@ -130,7 +130,7 @@
                             </a>
                         }
 
-                        <!-- ADD TO PLAYLIST -->
+                        <!-- add la pls -->
                         @if (User.Identity.IsAuthenticated)
                         {
                             <form method="post" action="/Playlists/AddSong" class="d-flex gap-2">
@@ -152,7 +152,7 @@
                                 </button>
                             </form>
                         }
-                        <!-- DETAILS -->
+                        <!-- detalii -->
                         <a href="/Songs/Show/@song.Id"
                            class="btn btn-outline-secondary btn-sm">
                             Details
@@ -167,7 +167,7 @@
 
 </div>
 
-<!-- PAGINATION -->
+<!-- paginatie -->
 <div class="mt-4">
     <nav>
         <ul class="pagination">
@@ -193,7 +193,7 @@
     </nav>
 </div>
 
-<!-- AUDIO SCRIPT -->
+<!-- script audio -->
 <script>
     document.addEventListener("DOMContentLoaded", () => {
 

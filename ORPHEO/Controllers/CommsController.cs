@@ -48,7 +48,7 @@ namespace Orpheo.Controllers
             }
             else
             {
-                // Doar autorul sau adminul
+                // doar autorul sau adminul
                 if (comm.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
                 {
                     db.Comms.Remove(comm);

@@ -1,5 +1,38 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model Orpheo.Models.SessionRoom
+
 @{
+    ViewBag.Title = "Delete Session Room";
 }
+
+<h2 class="text-danger">Delete Session Room</h2>
+
+<hr />
+
+<div class="alert alert-warning">
+    <strong>Warning!</strong>
+    Are you sure you want to delete this session room?
+    This action cannot be undone.
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Name</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Playlist</dt>
+    <dd class="col-sm-9">@Model.Playlist?.Name</dd>
+</dl>
+
+<form asp-action="DeleteConfirmed" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <button type="submit" class="btn btn-danger">
+        Delete
+    </button>
+
+    <a asp-action="Show"
+       asp-route-id="@Model.Id"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+</form>

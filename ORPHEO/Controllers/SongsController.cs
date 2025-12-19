@@ -28,7 +28,7 @@ namespace Orpheo.Controllers
         // afisez toate cantecele
         public IActionResult Index(string search, string sort = "date", int page = 1)
         {
-            int perPage = 5;   // câte melodii afișezi pe pagină
+            int perPage = 5;   // cate melodii pe pagina
             var songsQuery = db.Songs
                 .Include(s => s.User)
                 .Include(s => s.SongTags).ThenInclude(st => st.Tag)
@@ -42,7 +42,7 @@ namespace Orpheo.Controllers
             {
                 search = search.Trim().ToLower();
 
-                // Căutare în titlu + artist
+                // caut in titlu + artist
                 var idsSongs = db.Songs
                 .Include(s => s.User)
                 .Where(s =>
@@ -53,13 +53,13 @@ namespace Orpheo.Controllers
 
 
 
-                // Căutare în tag-uri
+                // caut in taguri
                 var idsTags = db.SongTags
                     .Where(st => st.Tag.Name.ToLower().Contains(search))
                     .Select(st => st.SongId)
                     .ToList();
 
-                // Căutare în comentarii
+                // caut in comentarii
                 var idsComments = db.Comms
                     .Where(c => c.Text.ToLower().Contains(search))
                     .Select(c => c.SongId)
@@ -74,13 +74,13 @@ namespace Orpheo.Controllers
                 songsQuery = songsQuery.Where(s => mergedIds.Contains(s.Id));
             }
  
-            //PAGINAȚIE  
+            //paginatie
             int totalItems = songsQuery.Count();
             int lastPage = (int)Math.Ceiling((double)totalItems / perPage);
 
             int offset = (page - 1) * perPage;
 
-            // SORTARE
+            // sortare
             switch (sort)
             {
                 case "likes":
@@ -95,7 +95,7 @@ namespace Orpheo.Controllers
                     break;
             }
 
-            // PAGINARE
+            // paginare
             var songs = songsQuery
                 .Skip(offset)
                 .Take(perPage)
@@ -127,7 +127,7 @@ namespace Orpheo.Controllers
         {
             var userId = _userManager.GetUserId(User);
 
-            // căutăm votul existent
+            // caut votul existent
             var vote = await _context.SongVotes
                 .FirstOrDefaultAsync(v => v.SongId == id && v.UserId == userId);
 
@@ -146,12 +146,12 @@ namespace Orpheo.Controllers
                 vote.IsLike = true;
             }
 
-            // găsim playlistul Favorites al userului
+            // caut pls Favorites al useului
             var favorites = await _context.Playlists
                 .Include(p => p.PlaylistSongs)
                 .FirstOrDefaultAsync(p => p.UserId == userId && p.Name == "Favorites");
 
-            // dacă userul NU are playlist Favorites → îl creăm ACUM
+            // daca nu are pls Favorites, il creez acum 
             if (favorites == null)
             {
                 favorites = new Playlist
@@ -165,10 +165,9 @@ namespace Orpheo.Controllers
 
                 _context.Playlists.Add(favorites);
                 await _context.SaveChangesAsync();
-                // acum favorites are Id -> putem adăuga melodii în el
             }
 
-            // adăugăm melodia în playlist (dacă nu există deja)
+            // adaug melodia in pls daca nu e deja
             if (!favorites.PlaylistSongs.Any(ps => ps.SongId == id))
             {
                 favorites.PlaylistSongs.Add(new PlaylistSong
@@ -205,7 +204,7 @@ namespace Orpheo.Controllers
                 vote.IsLike = false;
             }
 
-            // găsim playlistul Favorites
+            // caut pls Favorites
             var favorites = await _context.Playlists
                 .Include(p => p.PlaylistSongs)
                 .FirstOrDefaultAsync(p => p.UserId == userId && p.Name == "Favorites");
@@ -306,6 +305,31 @@ namespace Orpheo.Controllers
             ModelState.Remove("Url");
 
             song.DataPublicarii = DateTime.Now;
+
+            var artistUser = db.Users
+                .Where(u => u.Name == song.Artist)
+                .FirstOrDefault();
+
+            if (artistUser == null)
+            {
+                ModelState.AddModelError("Artist", "Artistul introdus nu există în baza de date.");
+            }
+            else
+            {
+                // verif daca userul e artist
+                var artistRoleId = db.Roles
+                    .Where(r => r.Name == "Artist")
+                    .Select(r => r.Id)
+                    .FirstOrDefault();
+
+                bool userIsArtist = db.UserRoles
+                    .Any(ur => ur.UserId == artistUser.Id && ur.RoleId == artistRoleId);
+
+                if (!userIsArtist)
+                {
+                    ModelState.AddModelError("Artist", "Utilizatorul există, dar nu are rolul Artist.");
+                }
+            }
 
             // VALIDARE AUDIO
             if (AudioFile == null || AudioFile.Length == 0)
@@ -411,7 +435,7 @@ namespace Orpheo.Controllers
                         return View(song);
                     }
 
-                    // Ștergere vechi
+                    // stergere vechi
                     if (!string.IsNullOrEmpty(song.Url))
                     {
                         var oldPath = "wwwroot" + song.Url.Replace("/", "\\");
@@ -497,19 +521,19 @@ namespace Orpheo.Controllers
 
             if (song.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
             {
-                // Ștergere SongTags
+                // stergere SongTags
                 var songTags = db.SongTags.Where(st => st.SongId == song.Id);
                 db.SongTags.RemoveRange(songTags);
 
-                // Ștergere PlaylistSongs
+                // stergere PlaylistSongs
                 var playlistSongs = db.PlaylistSongs.Where(ps => ps.SongId == song.Id);
                 db.PlaylistSongs.RemoveRange(playlistSongs);
 
-                // Ștergere comentarii
+                // stergere comentarii
                 var comms = db.Comms.Where(c => c.SongId == song.Id);
                 db.Comms.RemoveRange(comms);
 
-                // Ștergere finală song
+                // stergere finala song
                 db.Songs.Remove(song);
                 db.SaveChanges();
 
