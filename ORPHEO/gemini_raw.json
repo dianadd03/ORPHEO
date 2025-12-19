@@ -1,0 +1,30 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "```json\n{\"tags\":[\"dark\",\"hope\",\"energetic\"]}\n```"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 579,
+    "candidatesTokenCount": 15,
+    "totalTokenCount": 3318,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 579
+      }
+    ],
+    "thoughtsTokenCount": 2724
+  },
+  "modelVersion": "gemini-2.5-flash",
+  "responseId": "5HFFaYf5PK_1vdIPrsaOyAU"
+}

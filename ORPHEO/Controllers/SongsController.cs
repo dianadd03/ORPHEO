@@ -5,18 +5,56 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Orpheo.Data;
 using Orpheo.Models;
+using ORPHEO.Services;
 using System.Linq;
 
 namespace Orpheo.Controllers
 {
     public class SongsController(ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager) : Controller
+        RoleManager<IdentityRole> roleManager, 
+        ISongAiTagService aiService) : Controller
     {
         private readonly ApplicationDbContext _context = context;
         private readonly ApplicationDbContext db = context;
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+        private readonly ISongAiTagService _aiService = aiService;
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> AnalyzeWithAi(int id)
+        {
+            var song = db.Songs
+                .Include(s => s.SongTags)
+                .FirstOrDefault(s => s.Id == id);
+
+            if (song == null || string.IsNullOrWhiteSpace(song.Lyrics))
+                return BadRequest();
+
+            var aiTags = await _aiService.AnalyzeLyricsAsync(song.Lyrics);
+
+            // ștergem tagurile existente
+            db.SongTags.RemoveRange(song.SongTags);
+
+            // adăugăm tagurile AI
+            var tagsFromDb = db.Tags
+                .Where(t => aiTags.Contains(t.Name))
+                .ToList();
+
+            foreach (var tag in tagsFromDb)
+            {
+                db.SongTags.Add(new SongTag
+                {
+                    SongId = song.Id,
+                    TagId = tag.Id
+                });
+            }
+
+            await db.SaveChangesAsync();
+
+            return RedirectToAction("Show", new { id });
+        }
 
 
         // daca scriu cu Authorize, atunci vor avea permisiuni doar tipurile de utilizatori 
@@ -306,30 +344,30 @@ namespace Orpheo.Controllers
 
             song.DataPublicarii = DateTime.Now;
 
-            var artistUser = db.Users
-                .Where(u => u.Name == song.Artist)
-                .FirstOrDefault();
+            //var artistUser = db.Users
+            //    .Where(u => u.Name == song.Artist)
+            //    .FirstOrDefault();
 
-            if (artistUser == null)
-            {
-                ModelState.AddModelError("Artist", "Artistul introdus nu există în baza de date.");
-            }
-            else
-            {
-                // verif daca userul e artist
-                var artistRoleId = db.Roles
-                    .Where(r => r.Name == "Artist")
-                    .Select(r => r.Id)
-                    .FirstOrDefault();
+            //if (artistUser == null)
+            //{
+            //    ModelState.AddModelError("Artist", "Artistul introdus nu există în baza de date.");
+            //}
+            //else
+            //{
+            //    // verif daca userul e artist
+            //    var artistRoleId = db.Roles
+            //        .Where(r => r.Name == "Artist")
+            //        .Select(r => r.Id)
+            //        .FirstOrDefault();
 
-                bool userIsArtist = db.UserRoles
-                    .Any(ur => ur.UserId == artistUser.Id && ur.RoleId == artistRoleId);
+            //    bool userIsArtist = db.UserRoles
+            //        .Any(ur => ur.UserId == artistUser.Id && ur.RoleId == artistRoleId);
 
-                if (!userIsArtist)
-                {
-                    ModelState.AddModelError("Artist", "Utilizatorul există, dar nu are rolul Artist.");
-                }
-            }
+            //    if (!userIsArtist)
+            //    {
+            //        ModelState.AddModelError("Artist", "Utilizatorul există, dar nu are rolul Artist.");
+            //    }
+            //}
 
             // VALIDARE AUDIO
             if (AudioFile == null || AudioFile.Length == 0)
@@ -459,6 +497,8 @@ namespace Orpheo.Controllers
                 }
 
                 song.Title = requestSong.Title;
+
+
 
                 song.SongTags.Clear();
                 if (SelectedTags != null && SelectedTags.Length > 0)

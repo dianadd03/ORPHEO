@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Orpheo.Data;
 using Orpheo.Models;
+using ORPHEO.Services;
 using Microsoft.AspNetCore.Identity;    
 using Microsoft.AspNetCore.Identity.UI;
 
@@ -9,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
+builder.Services.AddScoped<ISongAiTagService, GoogleSongAiTagService>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>options.UseSqlServer(connectionString));
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
