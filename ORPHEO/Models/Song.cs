@@ -21,6 +21,8 @@ namespace Orpheo.Models
         public string? UserId { get; set; }
         public virtual ApplicationUser? User { get; set; }
 
+        public string? Lyrics { get; set; }
+
         // Many-to-many cu Tag
         public virtual ICollection<SongTag> SongTags { get; set; } = new List<SongTag>();
 
