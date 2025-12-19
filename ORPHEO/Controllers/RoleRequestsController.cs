@@ -56,13 +56,13 @@ namespace ORPHEO.Controllers
             var request = db.RoleRequests.Include(r => r.User).FirstOrDefault(r => r.Id == id);
             if (request == null) return NotFound();
 
-            // 1. scoatem rolul User
+            // 1. scolt rolul User
             if (await _userManager.IsInRoleAsync(request.User, "User"))
             {
                 await _userManager.RemoveFromRoleAsync(request.User, "User");
             }
 
-            // 2. adăugăm rolul Artist
+            // 2. adaug rolul Artist
             await _userManager.AddToRoleAsync(request.User, "Artist");
 
             db.RoleRequests.Remove(request);
