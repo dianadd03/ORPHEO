@@ -137,35 +137,63 @@ namespace Orpheo.Controllers
 
         [Authorize(Roles = "User,Artist,Admin")]
         [HttpPost]
-        public IActionResult New(Playlist playlist, IFormFile ImageFile, int? SongId)
+        public IActionResult New(Playlist playlist, IFormFile? ImageFile, int? SongId)
         {
             playlist.UserId = _userManager.GetUserId(User);
+
             ModelState.Remove("UserId");
+            ModelState.Remove("User");
+            ModelState.Remove("ImagePath");
+            ModelState.Remove("PlaylistSongs");
+            ModelState.Remove("SessionRooms");
 
-
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                db.Playlists.Add(playlist);
-                db.SaveChanges();
-
-                if (SongId != null)
-                {
-                    db.PlaylistSongs.Add(new PlaylistSong
-                    {
-                        PlaylistId = playlist.Id,
-                        SongId = SongId.Value
-                    });
-
-                    db.SaveChanges();
-                }
-
-                TempData["message"] = "Playlist creat!";
-                TempData["messageType"] = "alert-success";
-
-                return RedirectToAction("Index");
+                return View(playlist);
             }
 
-            return View(playlist);
+            if (ImageFile == null || ImageFile.Length == 0)
+            {
+                playlist.ImagePath = "/uploads/playlists/default.jpg";
+            }
+            else
+            {
+                string uploadsFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot/uploads/playlists"
+                );
+
+                Directory.CreateDirectory(uploadsFolder);
+
+                string fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
+                string filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = System.IO.File.Create(filePath))
+                {
+                    ImageFile.CopyTo(stream);
+                }
+
+                playlist.ImagePath = "/uploads/playlists/" + fileName;
+            }
+
+            db.Playlists.Add(playlist);
+            db.SaveChanges();
+
+            if (SongId != null)
+            {
+                db.PlaylistSongs.Add(new PlaylistSong
+                {
+                    PlaylistId = playlist.Id,
+                    SongId = SongId.Value
+                });
+
+                db.SaveChanges();
+            }
+
+            TempData["message"] = "Playlist created successfully ";
+            TempData["messageType"] = "alert-success";
+
+            return RedirectToAction("Index");
         }
 
 
@@ -186,14 +214,14 @@ namespace Orpheo.Controllers
                 return View(playlist);
             }
 
-            TempData["message"] = "Nu aveți dreptul să editați acest playlist!";
+            TempData["message"] = "You don’t have permission to edit this playlist.";
             TempData["messageType"] = "alert-danger";
             return RedirectToAction("Index");
         }
 
         [Authorize(Roles = "User,Artist,Admin")]
         [HttpPost]
-        public IActionResult Edit(int id, Playlist requestPlaylist, IFormFile ImageFile)
+        public IActionResult Edit(int id, Playlist requestPlaylist, IFormFile? ImageFile)
         {
             Playlist? playlist = db.Playlists.Find(id);
 
@@ -201,6 +229,8 @@ namespace Orpheo.Controllers
                 return NotFound();
 
             ModelState.Remove("UserId");
+            ModelState.Remove("ImagePath");
+
 
             if (playlist.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
             {
@@ -231,16 +261,16 @@ namespace Orpheo.Controllers
 
                     db.SaveChanges();
 
-                    TempData["message"] = "Playlist-ul a fost modificat!";
+                    TempData["message"] = "Playlist updated successfully!";
                     TempData["messageType"] = "alert-success";
 
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Show", new { id = playlist.Id });
                 }
 
-                return View(requestPlaylist);
+                return View(playlist);
             }
 
-            TempData["message"] = "Nu aveți dreptul să editați acest playlist!";
+            TempData["message"] = "You don’t have permission to edit this playlist.";
             TempData["messageType"] = "alert-danger";
             return RedirectToAction("Index");
         }
@@ -260,35 +290,48 @@ namespace Orpheo.Controllers
             return View(playlist);
         }
 
+        [Authorize(Roles = "User,Artist,Admin")]
+        [HttpGet]
+        public IActionResult Delete(int id)
+        {
+            var playlist = db.Playlists
+                .Include(p => p.User)
+                .FirstOrDefault(p => p.Id == id);
+
+            if (playlist == null)
+                return NotFound();
+
+            if (playlist.UserId != _userManager.GetUserId(User) && !User.IsInRole("Admin"))
+                return Forbid();
+
+            return View(playlist); 
+        }
 
 
         [Authorize(Roles = "User,Artist,Admin")]
         [HttpPost]
-        public IActionResult Delete(int id)
+        [ValidateAntiForgeryToken]
+        [ActionName("Delete")]
+        public IActionResult DeleteConfirmed(int id)
         {
-            Playlist? playlist = db.Playlists.Find(id);
+            var playlist = db.Playlists
+                .Include(p => p.PlaylistSongs)
+                .Include(p => p.SessionRooms)
+                .FirstOrDefault(p => p.Id == id);
 
             if (playlist == null)
-            {
                 return NotFound();
-            }
 
-            if (playlist.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin"))
-            {
-                db.PlaylistSongs.RemoveRange(
-                                                db.PlaylistSongs.Where(ps => ps.PlaylistId == id)
-                                            );
-                db.Playlists.Remove(playlist);
-                db.SaveChanges();
+            if (playlist.UserId != _userManager.GetUserId(User) && !User.IsInRole("Admin"))
+                return Forbid();
 
-                TempData["message"] = "Playlist-ul a fost șters!";
-                TempData["messageType"] = "alert-success";
-            }
-            else
-            {
-                TempData["message"] = "Nu aveți dreptul să ștergeți acest playlist!";
-                TempData["messageType"] = "alert-danger";
-            }
+            db.PlaylistSongs.RemoveRange(playlist.PlaylistSongs);
+            db.SessionRooms.RemoveRange(playlist.SessionRooms);
+            db.Playlists.Remove(playlist);
+            db.SaveChanges();
+
+            TempData["message"] = "Playlist deleted successfully.";
+            TempData["messageType"] = "alert-success";
 
             return RedirectToAction("Index");
         }

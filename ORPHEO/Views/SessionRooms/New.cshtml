@@ -1,39 +1,47 @@
-﻿
+﻿@model Orpheo.Models.SessionRoom
+
 @{
-    ViewData["Title"] = "SessionRooms";
+    ViewData["Title"] = "Create Session Room";
 }
-@using Orpheo.Data
-@model Orpheo.Models.SessionRoom
 
-<h2 class="mb-4">Add a SessionRoom</h2>
+<h2 class="orpheo-page-title mb-4">Create session room</h2>
 
+<!-- ALERT -->
 @if (ViewBag.Message != null)
 {
-    <div class="alert @ViewBag.AlertType mt-2">
+    <div class="orpheo-alert @ViewBag.AlertType">
         @ViewBag.Message
     </div>
 }
 
-<form method="post">
+<form method="post" class="orpheo-form">
 
-    <div class="form-group">
-        <label>Select playlist</label>
+    <!-- PLAYLIST -->
+    <div class="mb-4">
+        <label class="form-label">Select playlist</label>
         <select asp-for="PlaylistId"
-                class="form-control"
-                asp-items="ViewBag.Playlists">
+                asp-items="ViewBag.Playlists"
+                class="form-control orpheo-select">
         </select>
+        <span asp-validation-for="PlaylistId" class="text-danger"></span>
     </div>
 
-    <div class="form-group mt-3">
-        <label>Room Name</label>
-        <input asp-for="Name" class="form-control" />
+    <!-- NAME -->
+    <div class="mb-4">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control orpheo-input" />
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-success mt-4">
-        Save SessionRoom
-    </button>
+    <!-- ACTIONS -->
+    <div class="d-flex gap-3">
+        <button type="submit" class="btn-orpheo">
+            Create
+        </button>
+
+        <a asp-action="Index" class="btn-cancel">
+            Cancel
+        </a>
+    </div>
 
 </form>
-
-

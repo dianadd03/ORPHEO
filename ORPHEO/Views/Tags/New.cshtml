@@ -1,17 +1,39 @@
 ﻿@model Orpheo.Models.Tag
 
-<h2>Create tag</h2>
+@{
+    ViewData["Title"] = "Create tag";
+}
 
-<form asp-controller="Tags" asp-action="New" method="post">
-    <div asp-validation-summary="All" class="text-danger"></div>
+<h2 class="orpheo-page-title mb-4">Create tag</h2>
 
-    <div class="form-group">
-        <label asp-for="Name" class="form-label">Name tag</label>
-        <input asp-for="Name" class="form-control" />
+<!-- ALERT / VALIDATION -->
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+<form asp-controller="Tags"
+      asp-action="New"
+      method="post"
+      class="orpheo-form">
+
+    <!-- NAME -->
+    <div class="mb-4">
+        <label asp-for="Name" class="form-label">
+            Tag name
+        </label>
+        <input asp-for="Name"
+               class="form-control orpheo-input"
+               placeholder="e.g. chill, energetic, sad" />
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
-    <br />
+    <!-- ACTIONS -->
+    <div class="d-flex gap-3">
+        <button type="submit" class="btn-orpheo">
+            <i class="bi bi-check-circle me-1"></i>
+            Create
+        </button>
 
-    <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-action="Index" class="btn-cancel">
+            Cancel
+        </a>
+    </div>
 </form>

@@ -1,60 +1,81 @@
 ﻿@model Orpheo.Models.Playlist
 
-<h2>@Model.Name</h2>
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<h2 class="orpheo-page-title mb-4">
+    @Model.Name
+</h2>
 
 @if (!Model.PlaylistSongs.Any())
 {
-    <div class="alert alert-warning">This playlist has no songs.</div>
+    <div class="orpheo-alert alert-danger">
+        This playlist has no songs.
+    </div>
     return;
 }
 
-<!-- AUDIO PLAYER SECTION -->
-<div class="card p-3 mb-4">
-    <div class="d-flex align-items-center gap-3">
+<!-- PLAYER CARD -->
+<div class="orpheo-card p-4 mb-4">
 
-        <!-- PLAY/PAUSE -->
-        <button class="btn btn-primary" id="playPauseBtn">
-            <i class="bi bi-play-fill" id="playIcon" style="font-size: 28px;"></i>
+    <!-- CONTROLS -->
+    <div class="d-flex align-items-center gap-3 mb-3">
+
+        <!-- PLAY / PAUSE -->
+        <button class="btn-orpheo-play" id="playPauseBtn">
+            <i class="bi bi-play-fill" id="playIcon" style="font-size:28px;"></i>
         </button>
 
-        <!-- inainte -->
-        <button class="btn btn-outline-secondary" id="prevBtn">
-            <i class="bi bi-skip-start-fill" style="font-size: 24px;"></i>
+        <!-- PREV -->
+        <button class="btn-cancel" id="prevBtn">
+            <i class="bi bi-skip-start-fill"></i>
         </button>
 
-        <!-- urm -->
-        <button class="btn btn-outline-secondary" id="nextBtn">
-            <i class="bi bi-skip-end-fill" style="font-size: 24px;"></i>
+        <!-- NEXT -->
+        <button class="btn-cancel" id="nextBtn">
+            <i class="bi bi-skip-end-fill"></i>
         </button>
 
-        <!-- Song title -->
+        <!-- CURRENT SONG -->
         <span id="currentSong" class="ms-3 fw-bold"></span>
     </div>
 
-    <!-- progress line -->
-    <input type="range" id="progressBar" min="0" max="100" value="0"
-           class="form-range mt-3" />
+    <!-- PROGRESS -->
+    <input type="range"
+           id="progressBar"
+           min="0"
+           max="100"
+           value="0"
+           class="form-range" />
 
     <audio id="audioPlayer"></audio>
 </div>
 
-<!-- LISTA DE MELODII -->
-<h4>Songs in this playlist:</h4>
-<ul class="list-group">
+<!-- SONG LIST -->
+<h4 class="mb-3">Songs in this playlist</h4>
+
+<div class="d-flex flex-column gap-2">
     @foreach (var ps in Model.PlaylistSongs)
     {
-        <li class="list-group-item d-flex justify-content-between align-items-center song-item"
-            data-url="@ps.Song.Url" data-title="@ps.Song.Title">
+        <div class="orpheo-card d-flex justify-content-between align-items-center p-3 song-item"
+             data-url="@ps.Song.Url"
+             data-title="@ps.Song.Title">
 
-            <span>@ps.Song.Title</span>
+            <span class="fw-medium">@ps.Song.Title</span>
 
-            <button class="btn btn-success btn-sm playThisBtn">
+            <button class="btn-orpheo-play playThisBtn">
                 <i class="bi bi-play-fill"></i>
             </button>
-        </li>
+        </div>
     }
-</ul>
+</div>
+<br />
+<a asp-action="Index" class="btn-cancel mt-4">
+    ← Back to playlists
+</a>
 
+<!-- PLAYER SCRIPT -->
 <script>
     const player = document.getElementById("audioPlayer");
     const playPauseBtn = document.getElementById("playPauseBtn");
@@ -64,7 +85,6 @@
     const nextBtn = document.getElementById("nextBtn");
     const prevBtn = document.getElementById("prevBtn");
 
-    // Construim playlistul
     const songs = Array.from(document.querySelectorAll(".song-item")).map(item => ({
         url: item.dataset.url,
         title: item.dataset.title
@@ -116,11 +136,8 @@
     };
 
     document.querySelectorAll(".playThisBtn").forEach((btn, i) => {
-        btn.onclick = () => {
-            loadSong(i);
-        };
+        btn.onclick = () => loadSong(i);
     });
 
-    // incepem cu primul
     loadSong(0);
 </script>

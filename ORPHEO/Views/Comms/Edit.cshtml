@@ -1,19 +1,19 @@
 ﻿@model Orpheo.Models.Comm
 
-<h2>Editare comentariu</h2>
+<h2>Edit comment</h2>
 <br />
 
 <form asp-action="Edit" asp-controller="Comms" asp-route-id="@Model.Id" method="post">
 
     <div class="form-group">
-        <label asp-for="Text" class="form-label">Conținut comentariu</label>
+        <label asp-for="Text" class="form-label">Content</label>
         <br />
-        <textarea asp-for="Text" class="form-control"></textarea>
+        <textarea asp-for="Text" class="orpheo-input"></textarea>
         <span asp-validation-for="Text" class="text-danger"></span>
     </div>
 
     <br /><br />
 
-    <button class="btn btn-primary" type="submit">Editează comentariul</button>
+    <button class="btn-orpheo" type="submit">Edit</button>
 
 </form>

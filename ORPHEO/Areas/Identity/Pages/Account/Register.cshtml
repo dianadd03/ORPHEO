@@ -1,73 +1,111 @@
 ﻿@page
 @model RegisterModel
+
 @{
     ViewData["Title"] = "Register";
 }
 
-<h1>@ViewData["Title"]</h1>
+<h2 class="orpheo-page-title mb-4">Create an Orpheo account</h2>
 
-<div class="row">
-    <div class="col-md-4">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
-            <hr />
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Name"
-                       class="form-control"
-                       aria-required="true"
-                       placeholder="Your name" />
-                <label asp-for="Input.Name">Name</label>
-                <span asp-validation-for="Input.Name" class="text-danger"></span>
-            </div>
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
 
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label asp-for="Input.Email">Email</label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.Password">Password</label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-            </div>
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
+        <div class="orpheo-card p-4">
+
+            <!-- VALIDATION -->
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3"
+                 role="alert"></div>
+
+            <form id="registerForm"
+                  asp-route-returnUrl="@Model.ReturnUrl"
+                  method="post">
+
+                <!-- NAME -->
+                <div class="mb-4">
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name"
+                           class="form-control orpheo-input"
+                           placeholder="Your name" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+
+                <!-- EMAIL -->
+                <div class="mb-4">
+                    <label asp-for="Input.Email" class="form-label"></label>
+                    <input asp-for="Input.Email"
+                           class="form-control orpheo-input"
+                           autocomplete="username"
+                           placeholder="email@example.com" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+
+                <!-- PASSWORD -->
+                <div class="mb-4">
+                    <label asp-for="Input.Password" class="form-label"></label>
+                    <input asp-for="Input.Password"
+                           class="form-control orpheo-input"
+                           autocomplete="new-password"
+                           placeholder="Password" />
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+
+                <!-- CONFIRM -->
+                <div class="mb-4">
+                    <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                    <input asp-for="Input.ConfirmPassword"
+                           class="form-control orpheo-input"
+                           autocomplete="new-password"
+                           placeholder="Confirm password" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <!-- ACTION -->
+                <button id="registerSubmit"
+                        type="submit"
+                        class="btn-orpheo w-100 mb-3">
+                    Create account
+                </button>
+
+                <!-- LINK -->
+                <div class="text-center">
+                    <p class="mb-0">
+                        Already have an account?
+                        <a asp-page="./Login"
+                           asp-route-returnUrl="@Model.ReturnUrl">
+                            Log in
+                        </a>
+                    </p>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- EXTERNAL REGISTER -->
+        @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+        {
+            <div class="orpheo-card p-4 mt-4 text-center">
+                <h5 class="mb-3">Or register with</h5>
+
+                <form asp-page="./ExternalLogin"
+                      asp-route-returnUrl="@Model.ReturnUrl"
+                      method="post">
+
+                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                        @foreach (var provider in Model.ExternalLogins!)
+                        {
+                            <button type="submit"
+                                    class="btn-cancel"
+                                    name="provider"
+                                    value="@provider.Name">
+                                @provider.DisplayName
+                            </button>
+                        }
                     </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
-                    </form>
-                }
-            }
-        </section>
+                </form>
+            </div>
+        }
+
     </div>
 </div>
 

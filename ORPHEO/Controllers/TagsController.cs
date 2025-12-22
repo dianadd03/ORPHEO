@@ -119,31 +119,36 @@ namespace Orpheo.Controllers
             
             return View(requestTag);
         }
-
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public IActionResult Delete(int id)
+        {
+            var tag = db.Tags.Find(id);
+            if (tag == null) return NotFound();
+            return View(tag);
+        }
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public IActionResult Delete(int id)
+        [ValidateAntiForgeryToken]
+        [ActionName("Delete")]
+        public IActionResult DeleteConfirmed(int id)
         {
-            Tag? tag = db.Tags
-                         .Include(t => t.SongTags)
-                         .Where(t => t.Id == id)
-                         .FirstOrDefault();
+            var tag = db.Tags
+                .Include(t => t.SongTags)
+                .FirstOrDefault(t => t.Id == id);
 
-            if (tag == null)
-            {
-                return NotFound();
-            }
+            if (tag == null) return NotFound();
 
             db.SongTags.RemoveRange(tag.SongTags);
-
             db.Tags.Remove(tag);
             db.SaveChanges();
 
-            TempData["message"] = "Tag-ul a fost șters!";
+            TempData["message"] = "Tag deleted successfully.";
             TempData["messageType"] = "alert-success";
 
             return RedirectToAction("Index");
         }
+
     }
 }

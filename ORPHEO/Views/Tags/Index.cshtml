@@ -1,39 +1,62 @@
 ﻿@using Orpheo.Models
 
 @{
+    ViewData["Title"] = "Tags";
     var tags = ViewBag.Tags as IEnumerable<Tag>;
 }
 
-<h2>Tags</h2>
+<h2 class="orpheo-page-title mb-4">Tags</h2>
 
-@if (User.IsInRole("Admin"))
-{
-    <a asp-action="New" class="btn btn-primary mb-3">Create tag</a>
-}
-
+<!-- ALERT -->
 @if (ViewBag.Message != null)
 {
-    <div class="alert @ViewBag.AlertType">@ViewBag.Message</div>
+    <div class="orpheo-alert @ViewBag.AlertType">
+        @ViewBag.Message
+    </div>
 }
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>No. songs</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
+<!-- ADMIN ACTION -->
+@if (User.IsInRole("Admin"))
+{
+    <a asp-action="New" class="btn-orpheo mb-4">
+        <i class="bi bi-plus-circle me-1"></i>
+        Create tag
+    </a>
+    <br />
+    <br />
+}
+
+
+@if (tags != null && tags.Any())
+{
+    <div class="d-flex flex-column gap-3">
+
         @foreach (var tag in tags)
         {
-            <tr>
-                <td>@tag.Name</td>
-                <td>@tag.SongTags?.Count()</td>
-                <td>
-                    <a asp-action="Show" asp-route-id="@tag.Id" class="btn btn-info btn-sm">Show</a>
-                </td>
-            </tr>
+            <div class="orpheo-card p-4 d-flex justify-content-between align-items-center">
+
+                <!-- LEFT -->
+                <div>
+                    <h5 class="mb-1">@tag.Name</h5>
+                    <small class="text-muted">
+                        @tag.SongTags?.Count() songs
+                    </small>
+                </div>
+
+                <!-- RIGHT -->
+                <a asp-action="Show"
+                   asp-route-id="@tag.Id"
+                   class="btn-orpheo-play">
+                    View
+                </a>
+            </div>
         }
-    </tbody>
-</table>
+
+    </div>
+}
+else
+{
+    <p class="text-muted">
+        No tags available.
+    </p>
+}

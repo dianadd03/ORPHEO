@@ -1,21 +1,47 @@
 ﻿@page
 @model LogoutModel
+
 @{
     ViewData["Title"] = "Log out";
 }
 
-<header>
-    <h1>@ViewData["Title"]</h1>
-    @{
-        if (User.Identity?.IsAuthenticated ?? false)
-        {
-            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
-                <button type="submit" class="nav-link btn btn-link text-dark">Click here to Logout</button>
-            </form>
-        }
-        else
-        {
-            <p>You have successfully logged out of the application.</p>
-        }
-    }
-</header>
+<h2 class="orpheo-page-title mb-4">Log out</h2>
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="orpheo-card p-4 text-center">
+
+            @if (User.Identity?.IsAuthenticated ?? false)
+            {
+                <p class="mb-4">
+                    Are you sure you want to log out of Orpheo?
+                </p>
+
+                <form asp-area="Identity"
+                      asp-page="/Account/Logout"
+                      asp-route-returnUrl="@Url.Page("/", new { area = "" })"
+                      method="post">
+
+                    <button type="submit" class="btn-cancel w-100">
+                        Log out
+                    </button>
+                </form>
+            }
+            else
+            {
+                <p class="mb-3">
+                    You have successfully logged out of Orpheo.
+                </p>
+
+                <a asp-area=""
+                   asp-page="/"
+                   class="btn-orpheo">
+                    Go to homepage
+                </a>
+            }
+
+        </div>
+
+    </div>
+</div>

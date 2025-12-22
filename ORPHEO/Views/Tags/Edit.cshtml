@@ -1,16 +1,37 @@
 ﻿@model Orpheo.Models.Tag
 
-<h2>Edit tag</h2>
+@{
+    ViewData["Title"] = "Edit tag";
+}
 
-<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+<h2 class="orpheo-page-title mb-4">Edit tag</h2>
 
-    <div class="form-group">
+<!-- VALIDATION -->
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+<form asp-action="Edit"
+      asp-route-id="@Model.Id"
+      method="post"
+      class="orpheo-form">
+
+    <!-- NAME -->
+    <div class="mb-4">
         <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
+        <input asp-for="Name"
+               class="form-control orpheo-input"
+               placeholder="Tag name" />
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
-    <br />
+    <!-- ACTIONS -->
+    <div class="d-flex gap-3">
+        <button type="submit" class="btn-orpheo">
+            <i class="bi bi-check-circle me-1"></i>
+            Save changes
+        </button>
 
-    <button class="btn btn-primary">Save</button>
+        <a asp-action="Index" class="btn-cancel">
+            Cancel
+        </a>
+    </div>
 </form>

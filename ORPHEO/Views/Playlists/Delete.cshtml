@@ -1,10 +1,37 @@
 ﻿@model Orpheo.Models.Playlist
 
-<h2>Ștergere playlist</h2>
+@{
+    ViewData["Title"] = "Delete playlist";
+}
 
-<p>Ești sigur că vrei să ștergi <strong>@Model.Name</strong>?</p>
+<h2 class="orpheo-page-title text-danger mb-3">
+    Delete playlist
+</h2>
 
-<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
-    <button class="btn btn-danger">Șterge</button>
-    <a asp-action="Index" class="btn btn-secondary">Renunță</a>
-</form>
+<div class="orpheo-card p-4">
+
+    <p class="mb-3">
+        Are you sure you want to delete
+        <strong>@Model.Name</strong>?
+        <br />
+        <strong>This action cannot be undone.</strong>
+    </p>
+
+    <form asp-action="Delete" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <div class="d-flex gap-3">
+            <button type="submit" class="btn-cancel">
+                Delete
+            </button>
+
+            <a asp-action="Show"
+               asp-route-id="@Model.Id"
+               class="btn-orpheo">
+                Cancel
+            </a>
+        </div>
+    </form>
+
+</div>
