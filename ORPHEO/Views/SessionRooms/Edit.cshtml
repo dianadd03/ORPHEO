@@ -1,45 +1,90 @@
 ﻿@model Orpheo.Models.SessionRoom
 @using System.Security.Claims
 
-<h2>Edit Session Room</h2>
+@{
+    ViewData["Title"] = "Edit session room";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    bool isHost = Model.HostUserId == currentUserId;
+    bool isAdmin = User.IsInRole("Admin");
+}
 
-<h4>Participants</h4>
-<ul class="list-group mb-3">
-    @foreach (var sru in Model.SessionRoomUsers)
+<h2 class="orpheo-page-title mb-4">Edit session room</h2>
+
+<!-- PARTICIPANTS -->
+<div class="orpheo-card p-4 mb-4">
+    <h5 class="mb-3">
+        Participants (@Model.SessionRoomUsers.Count)
+    </h5>
+
+    @if (Model.SessionRoomUsers.Any())
     {
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            @sru.User.Email
+        <div class="d-flex flex-column gap-2">
+            @foreach (var sru in Model.SessionRoomUsers)
+            {
+                <div class="d-flex justify-content-between align-items-center">
 
-            <form asp-action="RemoveParticipant"
-                  asp-route-roomId="@Model.Id"
-                  asp-route-userId="@sru.UserId"
-                  method="post">
-                <button class="btn btn-danger btn-sm">
-                    Remove
-                </button>
-            </form>
-        </li>
+                    <span>
+                        @sru.User?.Email
+                        @if (sru.UserId == Model.HostUserId)
+                        {
+                            <span class="orpheo-tag ms-2">Host</span>
+                        }
+                    </span>
+
+                    @if ((isHost || isAdmin) && sru.UserId != Model.HostUserId)
+                    {
+                        <form asp-action="RemoveParticipant"
+                              asp-route-roomId="@Model.Id"
+                              asp-route-userId="@sru.UserId"
+                              method="post">
+                            <button type="submit"
+                                    class="btn-cancel"
+                                    onclick="return confirm('Remove this participant?');">
+                                Remove
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
     }
-</ul>
+    else
+    {
+        <p class="text-muted">No participants yet.</p>
+    }
+</div>
 
-<form asp-action="Edit" method="post">
+<!-- EDIT FORM -->
+<form asp-action="Edit" method="post" class="orpheo-form">
     <input type="hidden" asp-for="Id" />
 
-    <!-- nume -->
-    <div class="mb-3">
+    <!-- NAME -->
+    <div class="mb-4">
         <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" know />
+        <input asp-for="Name" class="form-control orpheo-input" />
+        <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
-    <!-- playlist -->
-    <div class="mb-3">
+    <!-- PLAYLIST -->
+    <div class="mb-4">
         <label class="form-label">Playlist</label>
         <select asp-for="PlaylistId"
                 asp-items="ViewBag.Playlists"
-                class="form-select">
+                class="form-control orpheo-select">
         </select>
     </div>
 
-    <button class="btn btn-primary">Save changes</button>
+    <!-- ACTIONS -->
+    <div class="d-flex gap-3">
+        <button type="submit" class="btn-orpheo">
+            <i class="bi bi-check-circle me-1"></i>
+            Save changes
+        </button>
 
+        <a asp-action="Show"
+           asp-route-id="@Model.Id"
+           class="btn-cancel">
+            Cancel
+        </a>
+    </div>
 </form>

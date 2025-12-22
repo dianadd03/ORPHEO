@@ -1,77 +1,103 @@
 ﻿@using Orpheo.Models
 
 @{
+    ViewData["Title"] = "Playlists";
     var playlists = ViewBag.Playlists as IEnumerable<Playlist>;
 }
 
-<h2>Lista playlisturilor</h2>
+<h2 class="orpheo-page-title mb-3">Playlists</h2>
 
+<!-- ALERT (TempData, stil Orpheo) -->
+@if (TempData["message"] != null)
+{
+    <div class="orpheo-alert @TempData["messageType"]">
+        @TempData["message"]
+    </div>
+}
+
+<br />
 
 @if (User.Identity.IsAuthenticated)
 {
-    <a asp-action="New" class="btn btn-primary mb-3">Create playlist</a>
+    <a asp-action="New" class="btn-orpheo mb-4">
+        + Create playlist
+    </a>
 }
+<br />
+<br />
+<br />
 
-@if (ViewBag.Message != null)
-{
-    <div class="alert @ViewBag.AlertType">@ViewBag.Message</div>
-}
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
+
     @foreach (var p in playlists)
     {
         <div class="col">
-            <div class="card shadow-sm" style="border-radius: 12px;">
+            <div class="orpheo-card h-100">
 
+                <!-- IMAGE -->
                 <img src="@(string.IsNullOrEmpty(p.ImagePath)
-                                 ? "/uploads/playlists/default.jpg"
-                                 : p.ImagePath)"
-                     class="card-img-top"
-                     style="height: 250px; object-fit: cover; border-radius: 12px 12px 0 0;" />
+                                                 ? "/uploads/playlists/default.jpg"
+                                                 : p.ImagePath)"
+                 class="w-100"
+                 style="height:220px;
+                            object-fit:cover;
+                            border-radius:16px 16px 0 0;" />
 
-                <div class="card-body">
-                    <a class="btn btn-primary" asp-action="Play" asp-route-id="@p.Id">
-                        Play playlist
-                    </a>
+                <!-- BODY -->
+                <div class="p-3">
 
-
-                    <h5 class="card-title">
+                    <!-- TITLE -->
+                    <h5 class="mb-1">
                         @p.Name
-                        @if (p.IsPublic)
+                    @if (p.IsPublic)
                         {
-                            <i class="bi bi-unlock" title="Public playlist"></i>
+                            <i class="bi bi-unlock ms-1" title="Public playlist"></i>
                         }
                         else
                         {
-                            <i class="bi bi-lock" title="Private playlist"></i>
+                            <i class="bi bi-lock ms-1" title="Private playlist"></i>
                         }
                     </h5>
 
-                    <p class="card-text">
-                        <div class="user-inline mb-2">
-                            <img src="@(p.User?.ProfileImage ?? "/uploads/profile-images/default.png")"
-                                 class="user-avatar"
-                                 alt="user avatar" />
+                    <!-- USER -->
+                    <div class="user-inline mb-2">
+                        <img src="@(p.User?.ProfileImage ?? "/uploads/profile-images/default.png")"
+                             class="user-avatar"
+                             alt="user avatar" />
+                        <small>@p.User?.Name</small>
+                    </div>
 
-                            <small>
-                                @p.User?.Name
-                            </small>
-                        </div>
-                        <strong>Songs:</strong> @p.PlaylistSongs?.Count()
-                    </p>
+                    <!-- SONG COUNT -->
+                    <small class="text-muted">
+                        🎵 @p.PlaylistSongs.Count() songs
+                    </small>
 
-                    <a asp-action="Show" asp-route-id="@p.Id" class="btn btn-primary w-100">
-                        Open playlist
-                    </a>
+                    <!-- ACTIONS -->
+                    <div class="mt-3 d-flex gap-2">
+                        <a asp-action="Show"
+                           asp-route-id="@p.Id"
+                           class="btn-orpheo w-100">
+                            Open
+                        </a>
+
+                        <a asp-action="Play"
+                           asp-route-id="@p.Id"
+                           class="btn-cancel w-100">
+                            Play
+                        </a>
+                    </div>
 
                 </div>
             </div>
         </div>
     }
-</div>
 
+</div>
 
 @if (!User.Identity.IsAuthenticated)
 {
-    <i>You must be logged in to create a playlist.</i>
+    <p class="text-muted mt-4">
+        You must be logged in to create a playlist.
+    </p>
 }

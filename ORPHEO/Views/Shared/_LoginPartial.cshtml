@@ -12,11 +12,11 @@
     @if (User.IsInRole("Admin"))
     {
         <li class="nav-item d-flex align-items-center">
-            <img src="~/images/administrator.png" style="height:24px;" class="me-1" />
+            <img src="~/images/administrator.png" class="orpheo-icon me-1" />
         </li>
 
         <li class="nav-item">
-            <a class="nav-link text-dark"
+            <a class="nav-link orpheo-link"
                asp-controller="RoleRequests"
                asp-action="PendingRequests">
                 Role Requests
@@ -28,7 +28,7 @@
     @if (User.IsInRole("Artist"))
     {
         <li class="nav-item d-flex align-items-center">
-            <img src="~/images/artist.png" style="height:24px;" class="me-1" />
+            <img src="~/images/artist.png" class="orpheo-icon me-1" />
         </li>
     }
 
@@ -36,7 +36,7 @@
     @if (User.IsInRole("User"))
     {
         <li class="nav-item d-flex align-items-center">
-            <img src="~/images/music.png" style="height:24px;" class="me-1" />
+            <img src="~/images/music.png" class="orpheo-icon me-1" />
         </li>
     }
 
@@ -46,7 +46,7 @@
         var loggedUser = await UserManager.GetUserAsync(User);
 
         <li class="nav-item">
-            <a class="nav-link text-dark"
+            <a class="nav-link orpheo-link"
                asp-area="Identity"
                asp-page="/Account/Manage/Index"
                title="Manage">
@@ -55,19 +55,18 @@
         </li>
 
         <li class="nav-item">
-            <form asp-area="Identity"
-                  asp-page="/Account/Logout"
-                  asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                <button type="submit" class="nav-link btn btn-link text-dark">
-                    Logout
-                </button>
-            </form>
+            <a asp-area="Identity"
+               asp-page="/Account/Logout"
+               class="nav-link orpheo-link">
+                Logout
+            </a>
         </li>
+
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link text-dark"
+            <a class="nav-link orpheo-link"
                asp-area="Identity"
                asp-page="/Account/Register">
                 Register
@@ -75,7 +74,7 @@
         </li>
 
         <li class="nav-item">
-            <a class="nav-link text-dark"
+            <a class="nav-link orpheo-link"
                asp-area="Identity"
                asp-page="/Account/Login">
                 Login

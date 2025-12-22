@@ -1,8 +1,96 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<Orpheo.Models.Song>
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- HERO -->
+<section class="orpheo-hero text-center mb-5">
+    <img src="~/images/logo.png"
+         class="orpheo-logo mb-4" />
+
+    <h1 class="orpheo-title mb-3">
+        Discover music through emotion
+    </h1>
+
+    <p class="orpheo-subtitle mb-4">
+        Music, playlists and live sessions powered by AI.
+    </p>
+
+    <form asp-controller="Songs"
+          asp-action="Index"
+          method="get"
+          class="d-flex justify-content-center orpheo-search">
+        <input type="text"
+               name="search"
+               class="form-control me-2"
+               placeholder="Search songs, artists or moods..." />
+        <button class="btn btn-orpheo">
+            Search
+        </button>
+    </form>
+</section>
+
+<!-- MOST APPRECIATED SONGS -->
+<section class="mb-5">
+    <h3 class="mb-4 text-center">
+        <i class="bi bi-heart-fill orpheo-heart me-2"></i>
+        Most Appreciated Songs
+        <i class="bi bi-heart-fill orpheo-heart me-2"></i>
+    </h3>
+
+
+    <div class="row g-4">
+        @foreach (var song in Model)
+        {
+            <div class="col-md-4">
+                <div class="orpheo-card h-100 text-center">
+                    <h5 class="mb-1">@song.Title</h5>
+
+                    <p class="orpheo-artist mb-3">
+                        @song.User.Name
+                    </p>
+
+                    <div class="mb-3">
+                        @foreach (var st in song.SongTags)
+                        {
+                            <span class="orpheo-tag me-1">
+                                @st.Tag.Name
+                            </span>
+                        }
+                    </div>
+
+                    <a asp-controller="Songs"
+                       asp-action="Show"
+                       asp-route-id="@song.Id"
+                       class="btn btn-outline-light btn-sm">
+                        Open
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="orpheo-cta text-center my-5">
+    <h4 class="mb-2">Join Orpheo today</h4>
+
+    <p class="orpheo-subtitle mb-4">
+        Create playlists, share music and explore emotions through sound.
+    </p>
+
+    @if (!User.Identity!.IsAuthenticated)
+    {
+        <a asp-area="Identity"
+           asp-page="/Account/Register"
+           class="btn btn-orpheo btn-lg me-3">
+            Register
+        </a>
+
+        <a asp-area="Identity"
+           asp-page="/Account/Login"
+           class="btn btn-outline-light btn-lg">
+            Login
+        </a>
+    }
+</section>

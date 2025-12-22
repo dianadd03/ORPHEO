@@ -1,10 +1,36 @@
 ﻿@model Orpheo.Models.Tag
 
-<h2>Delete tag</h2>
+@{
+    ViewData["Title"] = "Delete tag";
+}
 
-<p>Are you sure you want to delete this tag <strong>@Model.Name</strong>?</p>
+<h2 class="orpheo-page-title text-danger mb-3">
+    Delete tag
+</h2>
 
-<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
-    <button class="btn btn-danger">Deleye</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-</form>
+<div class="orpheo-card p-4">
+
+    <p class="mb-4">
+        Are you sure you want to delete the tag
+        <strong>@Model.Name</strong>?
+        <br />
+        <strong>This action cannot be undone.</strong>
+    </p>
+
+    <form asp-action="Delete" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <div class="d-flex gap-3">
+            <button type="submit" class="btn-cancel">
+                <i class="bi bi-trash me-1"></i>
+                Delete
+            </button>
+
+            <a asp-action="Index" class="btn-orpheo">
+                Cancel
+            </a>
+        </div>
+    </form>
+
+</div>

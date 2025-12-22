@@ -1,157 +1,160 @@
 ﻿@page
 @model IndexModel
+
 @{
     ViewData["Title"] = "Profile";
     ViewData["ActivePage"] = ManageNavPages.Index;
 }
 
-<h3>@ViewData["Title"]</h3>
+<h2 class="orpheo-page-title mb-4">My profile</h2>
+
 <partial name="_StatusMessage" for="StatusMessage" />
 
-<!-- rol-->
-<div class="mb-4">
-    <h5>Account role</h5>
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
 
-    @if (Model.IsArtist)
-    {
-        <span class="badge bg-success">Artist</span>
-    }
-    @if(Model.IsAdmin)
-    {
-        <span class="badge bg-danger">Admin</span>
-    }
-    else
-    {
-        <span class="badge bg-secondary">User</span>
-    }
+        <!-- ROLE CARD -->
+        <div class="orpheo-card p-4 mb-4">
+            <h5 class="mb-3">Account role</h5>
 
-</div>
-<!-- cerere-->
-
-<div class="mb-4">
-
-
-    @if (Model.RoleRequest == null && Model.CanReapply && !Model.IsAdmin && !Model.IsArtist)
-    {
-        <h5>Artist role request</h5>
-        <a asp-controller="RoleRequests" 
-           asp-action="RequestArtistRole"
-           class="btn btn-outline-primary">
-            Request Artist role
-        </a>
-    }
-    else if (Model.RoleRequest?.Status == "Pending")
-    {
-        <div class="alert alert-warning">
-            Your request is under review.
+            <div class="d-flex gap-2 flex-wrap">
+                @if (Model.IsAdmin)
+                {
+                    <span class="badge bg-danger">Admin</span>
+                }
+                else if (Model.IsArtist)
+                {
+                    <span class="badge bg-success">Artist</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">User</span>
+                }
+            </div>
         </div>
-    }
-    else if (Model.RoleRequest?.Status == "Approved")
-    {
-        <div class="alert alert-success">
-            Your request was approved. You are now an Artist 
-        </div>
-    }
-    else if (Model.RoleRequest?.Status == "Rejected")
-    {
-        <div class="alert alert-danger">
-            Your request was rejected.
 
-            @if (!Model.CanReapply)
+        <!-- ARTIST REQUEST -->
+        <div class="orpheo-card p-4 mb-4">
+            <h5 class="mb-3">Artist role request</h5>
+
+            @if (Model.RoleRequest == null && Model.CanReapply && !Model.IsAdmin && !Model.IsArtist)
             {
-                <div class="mt-2 text-muted">
-                    You can apply again after
-                    <strong>@Model.RoleRequest.CreatedAt.AddYears(1).ToShortDateString()</strong>
+                <a asp-controller="RoleRequests"
+                   asp-action="RequestArtistRole"
+                   class="btn-orpheo">
+                    Request Artist role
+                </a>
+            }
+            else if (Model.RoleRequest?.Status == "Pending")
+            {
+                <div class="orpheo-alert alert-warning">
+                    Your request is under review.
                 </div>
             }
-        </div>
-    }
-
-
-</div>
-
-
-<div class="row">
-    <div class="col-md-6">
-
-        <form id="profile-form"
-              method="post"
-              enctype="multipart/form-data">
-
-            <div asp-validation-summary="ModelOnly"
-                 class="text-danger"
-                 role="alert"></div>
-
-            <!-- Username -->
-            <div class="form-floating mb-3">
-                <input asp-for="Username"
-                       class="form-control"
-                       disabled />
-                <label asp-for="Username"></label>
-            </div>
-
-            <!-- UserCode -->
-            <div class="form-floating mb-3">
-                <input class="form-control"
-                       value="@Model.Input.UserCode"
-                       readonly />
-                <label>User code</label>
-            </div>
-
-            <!-- Name -->
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Name" class="form-control" />
-                <label asp-for="Input.Name"></label>
-            </div>
-
-            <!-- Email -->
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" />
-                <label asp-for="Input.Email"></label>
-            </div>
-
-            <!-- About -->
-            <div class="form-floating mb-3">
-                <textarea asp-for="Input.About"
-                          class="form-control"
-                          style="height:100px"></textarea>
-                <label asp-for="Input.About"></label>
-            </div>
-
-            <!-- Profile photo upload -->
-            <div class="mb-3">
-                <label asp-for="Input.ProfilePhoto"
-                       class="form-label"></label>
-                <input asp-for="Input.ProfilePhoto"
-                       type="file"
-                       class="form-control"
-                       accept="image/*" />
-            </div>
-
-            <!-- Preview poză -->
-            @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+            else if (Model.RoleRequest?.Status == "Approved")
             {
-                <div class="mb-3 text-center">
-                    <img src="@Model.ProfileImagePath"
-                         class="rounded-circle"
-                         style="width:150px;height:150px;object-fit:cover;" />
-                    <div class="text-muted mt-1">
-                        Current profile photo
+                <div class="orpheo-alert alert-success">
+                    Your request was approved. You are now an Artist 
+                </div>
+            }
+            @if (Model.RoleRequest?.Status == "Rejected")
+            {
+                <div class="orpheo-alert alert-rejected">
+                    <span>
+                        <strong>Your request was rejected.</strong>
+                    </span>
+
+                    @if (!Model.CanReapply)
+                    {
+                        <span>
+                            You can apply again after
+                            <strong>
+                                @(Model.RoleRequest.CreatedAt.AddYears(1).ToString("dd MMM yyyy"))
+                            </strong>
+                        </span>
+                    }
+                </div>
+            }
+
+        </div>
+
+        <!-- PROFILE FORM -->
+        <div class="orpheo-card p-4">
+            <form id="profile-form"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"
+                     role="alert"></div>
+
+                
+                <!-- USER CODE -->
+                <div class="mb-3">
+                    <label class="form-label">User code</label>
+                    <input class="form-control orpheo-input"
+                           value="@Model.Input.UserCode"
+                           readonly />
+                </div>
+
+                <!-- NAME -->
+                <div class="mb-3">
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name"
+                           class="form-control orpheo-input" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+
+                <!-- EMAIL -->
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label"></label>
+                    <input asp-for="Input.Email"
+                           class="form-control orpheo-input" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+
+                <!-- ABOUT -->
+                <div class="mb-3">
+                    <label asp-for="Input.About" class="form-label"></label>
+                    <textarea asp-for="Input.About"
+                              class="form-control orpheo-textarea"
+                              rows="4"></textarea>
+                </div>
+
+                <!-- PROFILE PHOTO -->
+                <div class="mb-3">
+                    <label asp-for="Input.ProfilePhoto"
+                           class="form-label"></label>
+                    <input asp-for="Input.ProfilePhoto"
+                           type="file"
+                           class="form-control orpheo-input"
+                           accept="image/*" />
+                </div>
+
+                <!-- PREVIEW -->
+                @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+                {
+                    <div class="text-center mb-4">
+                        <img src="@Model.ProfileImagePath"
+                             class="rounded-circle"
+                             style="width:140px;height:140px;object-fit:cover;" />
+                        <div class="text-muted mt-2">
+                            Current profile photo
+                        </div>
                     </div>
-                </div>
-            }
+                }
 
+                <!-- ACTION -->
+                <button type="submit"
+                        class="btn-orpheo w-100">
+                    Save changes
+                </button>
 
-            <button type="submit"
-                    class="w-100 btn btn-lg btn-primary">
-                Save
-            </button>
-
-        </form>
+            </form>
+        </div>
 
     </div>
 </div>
-
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

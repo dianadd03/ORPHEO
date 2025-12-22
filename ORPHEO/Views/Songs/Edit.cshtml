@@ -7,44 +7,65 @@
     var selectedTags = ViewBag.SelectedTags as List<int>;
 }
 
-<h2>Edit song</h2>
+<h2 class="orpheo-page-title mb-4">Edit Song</h2>
 
-<form asp-action="Edit" method="post" enctype="multipart/form-data">
+<form asp-action="Edit" method="post" enctype="multipart/form-data"
+      class="orpheo-form">
+
     <input type="hidden" asp-for="Id" />
 
-    <div asp-validation-summary="All" class="text-danger"></div>
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
     <!-- TITLE -->
     <div class="mb-3">
         <label asp-for="Title" class="form-label"></label>
-        <input asp-for="Title" class="form-control" />
+        <input asp-for="Title" class="form-control orpheo-input" />
         <span asp-validation-for="Title" class="text-danger"></span>
     </div>
 
     <!-- ARTIST (READ-ONLY) -->
     <div class="mb-3">
         <label class="form-label">Artist</label>
-        <input class="form-control" value="@Model.User?.Name" disabled />
+        <input class="form-control orpheo-input"
+               value="@Model.User?.Name"
+               disabled />
     </div>
 
     <!-- AUDIO -->
-    <div class="form-group mt-3">
-        <label>Replace MP3 file (optional)</label>
-        <input type="file" name="NewAudioFile" accept=".mp3" class="form-control" />
+    <div class="mb-4">
+        <label class="form-label">Replace MP3 file (optional)</label>
+        <input type="file"
+               name="NewAudioFile"
+               accept=".mp3"
+               class="form-control orpheo-input" />
     </div>
 
     @if (!string.IsNullOrEmpty(Model.Url))
     {
-        <p class="mt-2"><strong>Current file:</strong></p>
-        <audio controls style="width:100%;">
-            <source src="@Model.Url" type="audio/mpeg">
-        </audio>
+        <div class="mb-4">
+            <strong class="text-muted">Current file:</strong>
+            <audio controls class="w-100 mt-2">
+                <source src="@Model.Url" type="audio/mpeg" />
+            </audio>
+        </div>
     }
 
+    <!-- LYRICS -->
+    <div class="mb-4">
+        <label asp-for="Lyrics" class="form-label">Lyrics</label>
+        <textarea asp-for="Lyrics"
+                  class="form-control orpheo-textarea"
+                  rows="8"
+                  placeholder="Write or edit the lyrics here..."></textarea>
+        <span asp-validation-for="Lyrics" class="text-danger"></span>
+    </div>
+
     <!-- TAGS -->
-    <div class="mb-3">
+    <div class="mb-4">
         <label class="form-label">Tags</label>
-        <select name="SelectedTags" multiple class="form-select">
+        <select name="SelectedTags"
+                multiple
+                class="form-select orpheo-select">
             @if (tags != null)
             {
                 foreach (var tag in tags)
@@ -52,7 +73,8 @@
                     var isSelected = selectedTags != null &&
                     selectedTags.Contains(int.Parse(tag.Value));
 
-                    <option value="@tag.Value" selected="@(isSelected ? "selected" : null)">
+                    <option value="@tag.Value"
+                            selected="@(isSelected ? "selected" : null)">
                         @tag.Text
                     </option>
                 }
@@ -61,6 +83,13 @@
     </div>
 
     <!-- BUTTONS -->
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn-orpheo">
+            Save
+        </button>
+
+        <a asp-action="Index" class="btn-cancel">
+            Cancel
+        </a>
+    </div>
 </form>

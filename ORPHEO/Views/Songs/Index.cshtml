@@ -7,17 +7,26 @@
 @inject ApplicationDbContext _context
 @inject UserManager<ApplicationUser> _userManager
 
-<h2 class="mb-4">All Songs</h2>
 
-<!-- search -->
-<form method="get" asp-action="Index" class="input-group mb-3">
+@if (TempData["message"] != null)
+{
+    <div class="alert @TempData["messageType"]">
+        @TempData["message"]
+    </div>
+}
+
+
+<h2 class="mb-4 text-center">All Songs</h2>
+
+<!-- SEARCH -->
+<form method="get" asp-action="Index" class="input-group mb-4">
     <input type="text"
            name="search"
-           class="form-control"
+           class="form-control orpheo-input"
            placeholder="Search songs, artists, tags..."
            value="@ViewBag.Search" />
 
-    <button class="btn btn-outline-success" type="submit">
+    <button class="btn btn-orpheo">
         Search
     </button>
 </form>
@@ -26,25 +35,20 @@
     string sort = ViewBag.Sort as string ?? "date";
 }
 
-<!-- sort -->
-<form method="get" asp-action="Index" class="mb-4">
+<!-- SORT -->
+<form method="get" asp-action="Index" class="mb-4 text-center">
     <input type="hidden" name="search" value="@ViewBag.Search" />
 
     <select name="sort"
-            class="form-select w-auto d-inline-block"
+            class="form-select orpheo-select d-inline-block w-auto"
             onchange="this.form.submit()">
 
-        @if (sort == "date")
-        {
-            <option value="date" selected>Sort by date (newest)</option>
-            <option value="likes">Sort by likes</option>
-        }
-        else
-        {
-            <option value="date">Sort by date (newest)</option>
-            <option value="likes" selected>Sort by likes</option>
-        }
-
+        <option value="date" selected="@(sort == "date")">
+            Sort by date (newest)
+        </option>
+        <option value="likes" selected="@(sort == "likes")">
+            Sort by likes
+        </option>
     </select>
 </form>
 
@@ -57,141 +61,138 @@
 
 @if (ViewBag.AfisareButoane == true)
 {
-    <a class="btn btn-primary mb-4" href="/Songs/New">
-        <i class="fa-solid fa-plus"></i> Add Song
-    </a>
+    <div class="text-center mb-4">
+        <a class="btn btn-orpheo" href="/Songs/New">
+            <i class="fa-solid fa-plus"></i> Add Song
+        </a>
+    </div>
 }
 
-<!-- lista cantece -->
-<div class="row row-cols-1 g-4">
+<!-- SONG LIST -->
+<div class="row g-4">
 
-    @foreach (var song in ViewBag.Songs)
+    @foreach (Orpheo.Models.Song song in ViewBag.Songs)
     {
-        <div class="col">
-            <div class="card shadow-sm border-0 song-card">
-                <div class="card-body">
+        <div class="col-12">
+            <div class="orpheo-card h-100 p-3">
 
-                    <h5 class="fw-bold">@song.Title</h5>
-                    <div class="user-inline mb-2">
-                        <img src="@(song.User?.ProfileImage ?? "/uploads/profile-images/default.png")"
-                             class="user-avatar"
-                             alt="user avatar" />
+                <h5 class="fw-semibold mb-1">@song.Title</h5>
 
-                        <small>
-                            @song.User?.Name
-                        </small>
-                    </div>
+                <div class="d-flex align-items-center mb-3">
+                    <img src="@(song.User?.ProfileImage ?? "/uploads/profile-images/default.png")"
+                         class="user-avatar me-2" />
+                    <span class="text-muted small">@song.User?.Name</span>
+                </div>
 
-                    <!-- PLAYER -->
-                    <div class="mb-3">
-                        <button class="btn btn-primary" onclick="togglePlay(@song.Id)">
-                            <i id="icon-@song.Id" class="fa-solid fa-play"></i>
-                            Listen
+                <!-- PLAYER -->
+                <div class="mb-3">
+                    <button class="btn btn-orpheo-play btn-sm"
+                            onclick="togglePlay(@song.Id)">
+                        <i id="icon-@song.Id" class="fa-solid fa-play"></i>
+                        Listen
+                    </button>
+
+                    <audio id="audio-@song.Id" src="@song.Url"></audio>
+
+                    <input type="range"
+                           id="progress-@song.Id"
+                           class="form-range mt-2"
+                           min="0" max="100" value="0" />
+                </div>
+
+                <hr />
+
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+
+                    <!-- LIKE / DISLIKE -->
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        string userId = _userManager.GetUserId(User);
+                        var vote = _context.SongVotes
+                        .FirstOrDefault(v => v.SongId == song.Id && v.UserId == userId);
+
+                        bool? isLike = vote?.IsLike;
+
+                        <button type="button"
+                                class="btn @(isLike == true ? "btn-pink" : "btn-outline-pink") like-btn"
+                                data-id="@song.Id">
+                            <i class="bi bi-heart-fill"></i>
                         </button>
 
-                        <audio id="audio-@song.Id" src="@song.Url"></audio>
+                        <button type="button"
+                                class="btn @(isLike == false ? "btn-pink" : "btn-outline-pink") dislike-btn"
+                                data-id="@song.Id">
+                            <i class="bi bi-hand-thumbs-down-fill"></i>
+                        </button>
+                    }
 
-                        <input type="range"
-                               id="progress-@song.Id"
-                               class="form-range mt-2"
-                               min="0"
-                               max="100"
-                               value="0" />
+                    <!-- ADD TO PLAYLIST -->
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <form method="post"
+                              action="/Playlists/AddSong"
+                              class="d-flex gap-2 align-items-center">
+                            <input type="hidden" name="songId" value="@song.Id" />
 
-                    </div>
+                            <select name="playlistId"
+                                    class="form-select form-select-sm orpheo-select"
+                                    style="width:140px;">
+                                <option disabled selected>Playlist…</option>
+                                @foreach (var p in ViewBag.Playlists)
+                                {
+                                    <option value="@p.Id">@p.Name</option>
+                                }
+                            </select>
 
-                    <hr />
+                            <button type="submit"
+                                    class="btn btn-outline-light btn-sm">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </form>
+                    }
 
-                    <div class="d-flex flex-wrap gap-3 align-items-center">
-
-                        <!-- LIKE / DISLIKE  -->
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            string userId = _userManager.GetUserId(User);
-                            int songId = song.Id;
-
-                            var vote = _context.SongVotes
-                            .FirstOrDefault(v => v.SongId == songId && v.UserId == userId);
-
-                            bool? isLike = vote?.IsLike;
-
-                            <a asp-controller="Songs"
-                               asp-action="Like"
-                               asp-route-id="@song.Id"
-                               class="btn @(isLike == true ? "btn-pink" : "btn-outline-pink")">
-                                <i class="bi bi-hand-thumbs-up-fill"></i>
-                            </a>
-
-                            <a asp-controller="Songs"
-                               asp-action="Dislike"
-                               asp-route-id="@song.Id"
-                               class="btn @(isLike == false ? "btn-pink" : "btn-outline-pink")">
-                                <i class="bi bi-hand-thumbs-down-fill"></i>
-                            </a>
-                        }
-
-                        <!-- add la pls -->
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <form method="post" action="/Playlists/AddSong" class="d-flex gap-2">
-                                <input type="hidden" name="songId" value="@song.Id" />
-
-                                <select name="playlistId"
-                                        class="form-select form-select-sm"
-                                        style="width:150px;">
-                                    <option disabled selected>Playlist...</option>
-
-                                    @foreach (var p in ViewBag.Playlists)
-                                    {
-                                        <option value="@p.Id">@p.Name</option>
-                                    }
-                                </select>
-
-                                <button type="submit" class="btn btn-success btn-sm">
-                                    <i class="fa-solid fa-plus"></i>
-                                </button>
-                            </form>
-                        }
-                        <!-- detalii -->
-                        <a href="/Songs/Show/@song.Id"
-                           class="btn btn-outline-secondary btn-sm">
-                            Details
-                        </a>
-
-                    </div>
-
+                    <!-- DETAILS -->
+                    <a href="/Songs/Show/@song.Id"
+                       class="btn btn-outline-light btn-sm ms-auto">
+                        Details
+                    </a>
                 </div>
+
             </div>
         </div>
     }
 
 </div>
 
-<!-- paginatie -->
-<div class="mt-4">
+<!-- PAGINATION -->
+<div class="mt-5 d-flex justify-content-center">
     <nav>
         <ul class="pagination">
 
             <li class="page-item">
-                <a class="page-link" href="@($"{ViewBag.PaginationBaseUrl}1")">&laquo;</a>
+                <a class="page-link"
+                   href="@($"{ViewBag.PaginationBaseUrl}1")">&laquo;</a>
             </li>
 
             @for (int i = 1; i <= ViewBag.lastPage; i++)
             {
                 <li class="page-item">
-                    <a class="page-link" href="@($"{ViewBag.PaginationBaseUrl}{i}")">
+                    <a class="page-link"
+                       href="@($"{ViewBag.PaginationBaseUrl}{i}")">
                         @i
                     </a>
                 </li>
             }
 
             <li class="page-item">
-                <a class="page-link" href="@($"{ViewBag.PaginationBaseUrl}{ViewBag.lastPage}")">&raquo;</a>
+                <a class="page-link"
+                   href="@($"{ViewBag.PaginationBaseUrl}{ViewBag.lastPage}")">&raquo;</a>
             </li>
 
         </ul>
     </nav>
 </div>
+
 
 <!-- script audio -->
 <script>
@@ -259,3 +260,53 @@
             box-shadow: 0 6px 16px rgba(0,0,0,0.1);
         }
 </style>
+<script>
+    document.querySelectorAll(".like-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            vote("/Songs/Like", btn);
+        });
+    });
+
+    document.querySelectorAll(".dislike-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            vote("/Songs/Dislike", btn);
+        });
+    });
+
+    function vote(url, btn) {
+        const songId = btn.dataset.id;
+
+        fetch(url + "/" + songId, {
+            method: "POST",
+            headers: {
+                "RequestVerificationToken":
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            // resetam ambele butoane pt melodia asta
+            const container = btn.parentElement;
+
+            const likeBtn = container.querySelector(".like-btn");
+            const dislikeBtn = container.querySelector(".dislike-btn");
+
+            likeBtn.classList.remove("btn-pink");
+            likeBtn.classList.add("btn-outline-pink");
+
+            dislikeBtn.classList.remove("btn-pink");
+            dislikeBtn.classList.add("btn-outline-pink");
+
+            // activam corect
+            if (data.liked === true) {
+                likeBtn.classList.remove("btn-outline-pink");
+                likeBtn.classList.add("btn-pink");
+            }
+
+            if (data.disliked === true) {
+                dislikeBtn.classList.remove("btn-outline-pink");
+                dislikeBtn.classList.add("btn-pink");
+            }
+        });
+    }
+</script>

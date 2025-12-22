@@ -21,7 +21,7 @@ namespace Orpheo.Controllers
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly ISongAiTagService _aiService = aiService;
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Artist")]
         [HttpPost]
         public async Task<IActionResult> AnalyzeWithAi(int id)
         {
@@ -66,38 +66,32 @@ namespace Orpheo.Controllers
         // afisez toate cantecele
         public IActionResult Index(string search, string sort = "date", int page = 1)
         {
-            int perPage = 5;   // cate melodii pe pagina
-            var songsQuery = db.Songs
-                .Include(s => s.User)
-                .Include(s => s.SongTags).ThenInclude(st => st.Tag)
-                .Include(s => s.Comms)
-                .AsQueryable();
+            int perPage = 5;
 
-            // search bar
+            IQueryable<Song> baseQuery = db.Songs;
+
             ViewBag.Search = search;
 
             if (!string.IsNullOrWhiteSpace(search))
             {
                 search = search.Trim().ToLower();
 
-                // caut in titlu + artist
+                // titlu + artist
                 var idsSongs = db.Songs
-                .Include(s => s.User)
-                .Where(s =>
-                    s.Title.ToLower().Contains(search) ||
-                    (s.User != null && s.User.Name.ToLower().Contains(search)))
-                .Select(s => s.Id)
-                .ToList();
+                    .Include(s => s.User)
+                    .Where(s =>
+                        s.Title.ToLower().Contains(search) ||
+                        (s.User != null && s.User.Name.ToLower().Contains(search)))
+                    .Select(s => s.Id)
+                    .ToList();
 
-
-
-                // caut in taguri
+                // taguri
                 var idsTags = db.SongTags
                     .Where(st => st.Tag.Name.ToLower().Contains(search))
                     .Select(st => st.SongId)
                     .ToList();
 
-                // caut in comentarii
+                // comentarii
                 var idsComments = db.Comms
                     .Where(c => c.Text.ToLower().Contains(search))
                     .Select(c => c.SongId)
@@ -109,68 +103,95 @@ namespace Orpheo.Controllers
                     .Distinct()
                     .ToList();
 
-                songsQuery = songsQuery.Where(s => mergedIds.Contains(s.Id));
+                baseQuery = baseQuery.Where(s => mergedIds.Contains(s.Id));
             }
- 
-            //paginatie
-            int totalItems = songsQuery.Count();
+
+            // pagination
+            int totalItems = baseQuery.Count();
             int lastPage = (int)Math.Ceiling((double)totalItems / perPage);
+            if (lastPage < 1) lastPage = 1;
+
+            if (page < 1) page = 1;
+            if (page > lastPage) page = lastPage;
 
             int offset = (page - 1) * perPage;
 
-            // sortare
+            IQueryable<int> pageIdsQuery;
+
             switch (sort)
             {
                 case "likes":
-                    songsQuery = songsQuery
+                    pageIdsQuery = baseQuery
                         .OrderByDescending(s =>
-                            _context.SongVotes.Count(v => v.SongId == s.Id && v.IsLike == true));
+                            _context.SongVotes.Count(v => v.SongId == s.Id && v.IsLike))
+                        .Select(s => s.Id);
                     break;
 
                 default: // date
-                    songsQuery = songsQuery
-                        .OrderByDescending(s => s.DataPublicarii);
+                    pageIdsQuery = baseQuery
+                        .OrderByDescending(s => s.DataPublicarii)
+                        .Select(s => s.Id);
                     break;
             }
 
-            // paginare
-            var songs = songsQuery
+            var pageIds = pageIdsQuery
                 .Skip(offset)
                 .Take(perPage)
                 .ToList();
 
+            var songs = db.Songs
+                .Where(s => pageIds.Contains(s.Id))
+                .Include(s => s.User)
+                .Include(s => s.SongTags).ThenInclude(st => st.Tag)
+                .Include(s => s.Comms)
+                .AsSplitQuery()
+                .ToList();
+
+            // păstrăm ordinea
+            var order = pageIds
+                .Select((id, index) => new { id, index })
+                .ToDictionary(x => x.id, x => x.index);
+
+            songs = songs
+                .OrderBy(s => order[s.Id])
+                .ToList();
 
             ViewBag.Songs = songs;
             ViewBag.lastPage = lastPage;
             ViewBag.Sort = sort;
 
-
-            // Construirea URL-ului pentru paginare
             if (!string.IsNullOrEmpty(search))
                 ViewBag.PaginationBaseUrl = $"/Songs/Index?search={search}&sort={sort}&page=";
             else
                 ViewBag.PaginationBaseUrl = $"/Songs/Index?sort={sort}&page=";
 
-            // Playlist-urile userului
+            // Playlisturi user
             if (User.Identity.IsAuthenticated)
             {
                 string userId = _userManager.GetUserId(User);
-                ViewBag.Playlists = db.Playlists.Where(p => p.UserId == userId).ToList();
+                ViewBag.Playlists = db.Playlists
+                    .Where(p => p.UserId == userId)
+                    .ToList();
             }
 
             SetAccessRights();
             return View();
         }
+
+        [Authorize]
+        [HttpPost]
         public async Task<IActionResult> Like(int id)
         {
             var userId = _userManager.GetUserId(User);
 
-            // caut votul existent
             var vote = await _context.SongVotes
                 .FirstOrDefaultAsync(v => v.SongId == id && v.UserId == userId);
 
+            bool liked;
+
             if (vote == null)
             {
+                // LIKE
                 vote = new SongVote
                 {
                     SongId = id,
@@ -178,48 +199,39 @@ namespace Orpheo.Controllers
                     IsLike = true
                 };
                 _context.SongVotes.Add(vote);
+                liked = true;
+
+                await AddSongToFavorites(userId, id);
+            }
+            else if (vote.IsLike)
+            {
+                // RETRAGERE LIKE
+                _context.SongVotes.Remove(vote);
+                liked = false;
+
+                await RemoveSongFromFavorites(userId, id);
             }
             else
             {
+                // din DISLIKE -> LIKE
                 vote.IsLike = true;
-            }
+                liked = true;
 
-            // caut pls Favorites al useului
-            var favorites = await _context.Playlists
-                .Include(p => p.PlaylistSongs)
-                .FirstOrDefaultAsync(p => p.UserId == userId && p.Name == "Favorites");
-
-            // daca nu are pls Favorites, il creez acum 
-            if (favorites == null)
-            {
-                favorites = new Playlist
-                {
-                    Name = "Favorites",
-                    UserId = userId,
-                    IsPublic = false,
-                    ImagePath = "/images/favorites.png",
-                    PlaylistSongs = new List<PlaylistSong>()
-                };
-
-                _context.Playlists.Add(favorites);
-                await _context.SaveChangesAsync();
-            }
-
-            // adaug melodia in pls daca nu e deja
-            if (!favorites.PlaylistSongs.Any(ps => ps.SongId == id))
-            {
-                favorites.PlaylistSongs.Add(new PlaylistSong
-                {
-                    PlaylistId = favorites.Id,
-                    SongId = id
-                });
+                await AddSongToFavorites(userId, id);
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction("Index");
+
+            return Json(new
+            {
+                liked,
+                disliked = false
+            });
         }
 
 
+        [Authorize]
+        [HttpPost]
         public async Task<IActionResult> Dislike(int id)
         {
             var userId = _userManager.GetUserId(User);
@@ -227,8 +239,11 @@ namespace Orpheo.Controllers
             var vote = await _context.SongVotes
                 .FirstOrDefaultAsync(v => v.SongId == id && v.UserId == userId);
 
+            bool disliked;
+
             if (vote == null)
             {
+                // DISLIKE
                 vote = new SongVote
                 {
                     SongId = id,
@@ -236,31 +251,32 @@ namespace Orpheo.Controllers
                     IsLike = false
                 };
                 _context.SongVotes.Add(vote);
+                disliked = true;
+            }
+            else if (!vote.IsLike)
+            {
+                // RETRAGERE DISLIKE
+                _context.SongVotes.Remove(vote);
+                disliked = false;
             }
             else
             {
+                // LIKE -> DISLIKE
                 vote.IsLike = false;
+                disliked = true;
             }
 
-            // caut pls Favorites
-            var favorites = await _context.Playlists
-                .Include(p => p.PlaylistSongs)
-                .FirstOrDefaultAsync(p => p.UserId == userId && p.Name == "Favorites");
-
-            if (favorites != null)
-            {
-                var link = favorites.PlaylistSongs.FirstOrDefault(ps => ps.SongId == id);
-                if (link != null)
-                {
-                    favorites.PlaylistSongs.Remove(link);
-                }
-            }
+            // !ORICE DISLIKE = REMOVE DIN FAVORITES
+            await RemoveSongFromFavorites(userId, id);
 
             await _context.SaveChangesAsync();
-            return RedirectToAction("Index");
+
+            return Json(new
+            {
+                liked = false,
+                disliked
+            });
         }
-
-
 
 
         //[Authorize(Roles = "Admin,Artist,User")]
@@ -399,7 +415,11 @@ namespace Orpheo.Controllers
                 db.Songs.Add(song);
                 db.SaveChanges();
 
+                TempData["message"] = "Song added successfully";
+                TempData["messageType"] = "alert-success";
+
                 return RedirectToAction("Index");
+
             }
 
             ViewBag.Tags = GetAllTags();
@@ -429,9 +449,9 @@ namespace Orpheo.Controllers
             }
             else
             {
-                TempData["message"] = "Nu aveți dreptul să modificați un cântec care nu vă aparține!";
+                TempData["message"] = "You don’t have permission to edit this song.";
                 TempData["messageType"] = "alert-danger";
-                return RedirectToAction("Index");
+                return RedirectToAction("Show", new { id = song.Id });
             }
         }
 
@@ -455,9 +475,9 @@ namespace Orpheo.Controllers
             // Permisiuni
             if (!(song.UserId == _userManager.GetUserId(User) || User.IsInRole("Admin")))
             {
-                TempData["message"] = "Nu aveți dreptul să modificați un cântec care nu vă aparține!";
+                TempData["message"] = "You don’t have permission to edit this song.";
                 TempData["messageType"] = "alert-danger";
-                return RedirectToAction("Index");
+                return RedirectToAction("Show", new { id = song.Id });
             }
 
            
@@ -497,7 +517,7 @@ namespace Orpheo.Controllers
                 }
 
                 song.Title = requestSong.Title;
-
+                song.Lyrics = requestSong.Lyrics;
 
 
                 song.SongTags.Clear();
@@ -509,10 +529,10 @@ namespace Orpheo.Controllers
 
                 db.SaveChanges();
 
-                TempData["message"] = "Cântecul a fost modificat";
+                TempData["message"] = "Song updated successfully.";
                 TempData["messageType"] = "alert-success";
 
-                return RedirectToAction("Index");
+                return RedirectToAction("Show", new { id = song.Id });
             }
 
             ViewBag.Tags = GetAllTags();
@@ -542,7 +562,7 @@ namespace Orpheo.Controllers
             }
             else
             {
-                TempData["message"] = "Nu aveți dreptul să ștergeți un cântec care nu vă aparține!";
+                TempData["message"] = "You don’t have permission to delete this song.";
                 TempData["messageType"] = "alert-danger";
                 return RedirectToAction("Index");
             }
@@ -578,14 +598,14 @@ namespace Orpheo.Controllers
                 db.SaveChanges();
 
 
-                TempData["message"] = "Cântecul a fost șters";
+                TempData["message"] = "Song deleted successfully";
                 TempData["messageType"] = "alert-success";
 
                 return RedirectToAction("Index");
             }
             else
             {
-                TempData["message"] = "Nu aveți dreptul să ștergeți un cântec care nu vă aparține!";
+                TempData["message"] = "You don’t have permission to delete this song.";
                 TempData["messageType"] = "alert-danger";
                 return RedirectToAction("Index");
             }
@@ -623,5 +643,54 @@ namespace Orpheo.Controllers
 
             return selectList;
         }
+
+        private async Task AddSongToFavorites(string userId, int songId)
+        {
+            var favorites = await _context.Playlists
+                .Include(p => p.PlaylistSongs)
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.Name == "Favorites");
+
+            if (favorites == null)
+            {
+                favorites = new Playlist
+                {
+                    Name = "Favorites",
+                    UserId = userId,
+                    IsPublic = false,
+                    ImagePath = "/images/favorites.png"
+                };
+
+                _context.Playlists.Add(favorites);
+                await _context.SaveChangesAsync();
+            }
+
+            if (!favorites.PlaylistSongs.Any(ps => ps.SongId == songId))
+            {
+                favorites.PlaylistSongs.Add(new PlaylistSong
+                {
+                    PlaylistId = favorites.Id,
+                    SongId = songId
+                });
+            }
+        }
+
+        private async Task RemoveSongFromFavorites(string userId, int songId)
+        {
+            var favorites = await _context.Playlists
+                .Include(p => p.PlaylistSongs)
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.Name == "Favorites");
+
+            if (favorites == null) return;
+
+            var link = favorites.PlaylistSongs
+                .FirstOrDefault(ps => ps.SongId == songId);
+
+            if (link != null)
+            {
+                favorites.PlaylistSongs.Remove(link);
+            }
+        }
+
+
     }
 }
