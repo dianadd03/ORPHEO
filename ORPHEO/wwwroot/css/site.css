@@ -300,13 +300,22 @@ a:hover {
     background-color: var(--orpheo-accent-primary);
     color: #1f1f1f;
     border: none;
+    box-shadow: 0 0 0 2px rgba(214,166,232,0.35);
+    transform: scale(1.05);
 }
+
+.btn-pink i {
+    color: #1f1f1f;
+}
+
 
 .btn-outline-pink {
     border: 1px solid var(--orpheo-accent-primary);
     color: var(--orpheo-accent-primary);
     background: transparent;
 }
+
+
 
 /* PAGINATION */
 .pagination .page-link {

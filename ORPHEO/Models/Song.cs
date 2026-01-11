@@ -9,6 +9,7 @@ namespace Orpheo.Models
         public int Id { get; set; }
 
         [Required]
+        [MaxLength(20, ErrorMessage = "Titile cannot exceed 20 characters.")]
         public string? Title { get; set; }
 
         [Required]
