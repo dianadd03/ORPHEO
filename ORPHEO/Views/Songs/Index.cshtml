@@ -7,6 +7,10 @@
 @inject ApplicationDbContext _context
 @inject UserManager<ApplicationUser> _userManager
 
+<form method="post">
+    @Html.AntiForgeryToken()
+</form>
+
 
 @if (TempData["message"] != null)
 {
@@ -261,52 +265,56 @@
         }
 </style>
 <script>
-    document.querySelectorAll(".like-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            vote("/Songs/Like", btn);
+    document.addEventListener("DOMContentLoaded", () => {
+
+        document.querySelectorAll(".like-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                vote("/Songs/Like", btn);
+            });
         });
+
+        document.querySelectorAll(".dislike-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                vote("/Songs/Dislike", btn);
+            });
+        });
+
+        function vote(url, btn) {
+            const songId = btn.dataset.id;
+
+            fetch(url + "/" + songId, {
+                method: "POST",
+                headers: {
+                    "RequestVerificationToken":
+                        document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+
+                console.log("DATA DIN SERVER:", data); 
+
+                const container = btn.parentElement;
+
+                const likeBtn = container.querySelector(".like-btn");
+                const dislikeBtn = container.querySelector(".dislike-btn");
+
+                likeBtn.className = "btn btn-outline-pink like-btn";
+                dislikeBtn.className = "btn btn-outline-pink dislike-btn";
+
+                if (data.liked === true) {
+                    likeBtn.className = "btn btn-pink like-btn";
+                }
+
+                if (data.disliked === true) {
+                    dislikeBtn.className = "btn btn-pink dislike-btn";
+                }
+            })
+            .catch(err => {
+                console.error("EROARE FETCH:", err);
+            });
+        }
     });
-
-    document.querySelectorAll(".dislike-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            vote("/Songs/Dislike", btn);
-        });
-    });
-
-    function vote(url, btn) {
-        const songId = btn.dataset.id;
-
-        fetch(url + "/" + songId, {
-            method: "POST",
-            headers: {
-                "RequestVerificationToken":
-                    document.querySelector('input[name="__RequestVerificationToken"]').value
-            }
-        })
-        .then(r => r.json())
-        .then(data => {
-            // resetam ambele butoane pt melodia asta
-            const container = btn.parentElement;
-
-            const likeBtn = container.querySelector(".like-btn");
-            const dislikeBtn = container.querySelector(".dislike-btn");
-
-            likeBtn.classList.remove("btn-pink");
-            likeBtn.classList.add("btn-outline-pink");
-
-            dislikeBtn.classList.remove("btn-pink");
-            dislikeBtn.classList.add("btn-outline-pink");
-
-            // activam corect
-            if (data.liked === true) {
-                likeBtn.classList.remove("btn-outline-pink");
-                likeBtn.classList.add("btn-pink");
-            }
-
-            if (data.disliked === true) {
-                dislikeBtn.classList.remove("btn-outline-pink");
-                dislikeBtn.classList.add("btn-pink");
-            }
-        });
-    }
 </script>
+
+

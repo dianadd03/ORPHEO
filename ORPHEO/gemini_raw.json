@@ -4,7 +4,7 @@
       "content": {
         "parts": [
           {
-            "text": "```json\n{\"tags\":[\"sad\",\"dark\",\"melancholic\"]}\n```"
+            "text": "```json\n{\"tags\":[\"love\",\"dark\",\"energetic\"]}\n```"
           }
         ],
         "role": "model"
@@ -14,17 +14,17 @@
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 162,
-    "candidatesTokenCount": 16,
-    "totalTokenCount": 920,
+    "promptTokenCount": 1169,
+    "candidatesTokenCount": 15,
+    "totalTokenCount": 2530,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 162
+        "tokenCount": 1169
       }
     ],
-    "thoughtsTokenCount": 742
+    "thoughtsTokenCount": 1346
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "tXRJadDVL-i4kdUP8MjL0Qw"
+  "responseId": "0NhjaanLJLSlvdIPhoDqAQ"
 }
