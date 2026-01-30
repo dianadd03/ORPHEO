@@ -101,4 +101,22 @@ Role upgrades are handled through an approval workflow.
 
 ---
 
+## Demo
+<p align="center">
+  <img src="images/home.png" width="400">
+</p>
+<p align="center">
+  <img src="images/playlist.png" width="400">
+</p>
+<p align="center">
+  <img src="images/song.png" width="400">
+</p>
+<p align="center">
+  <img src="images/sessionroom1.jpeg" width="400">
+</p>
+<p align="center">
+  <img src="images/sessionroom2.jpeg" width="400">
+</p>
+
+
 
